@@ -6,14 +6,17 @@ This repository provides a hands-on example of a multithreaded particle filter, 
 In this demonstration, the system estimates a 2D state consisting of  coordinates. The simulated sensor is modeled as a distance sensor that measures , with its base fixed at the origin. This setup provides a straightforward yet illustrative way to explore how particle filters integrate sensor readings into state estimation.
 
 Robot state: 
-$
+```math
 \textbf{x} = \begin{bmatrix}
 x\\
 y 
 \end{bmatrix}
-$
+```
 
-Sensor model : $s = \sqrt{\left( x-\mathcal{O}_x \right)^2 + \left( y-\mathcal{O}_y \right)^2}$
+Sensor model : 
+```math
+s = \sqrt{\left( x-\mathcal{O}_x \right)^2 + \left( y-\mathcal{O}_y \right)^2}
+```
 
 # Robot Behavior
 The "robot" in this example follows a simple but dynamic routine:
