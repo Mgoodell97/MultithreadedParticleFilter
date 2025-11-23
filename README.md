@@ -1,4 +1,4 @@
-# MultithreadedParticleFilter
+# Multi-threaded Particle Filter
 
 This repository provides a hands-on example of a multithreaded particle filter, inspired by the core concepts outlined in [Particle Filters: A Hands-On Tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC7826670/). The implementation is written in modern C++, with the flexibility to toggle multithreading on or off through a simple boolean flag—making it easy to experiment with both single-threaded and parallel execution.
 
