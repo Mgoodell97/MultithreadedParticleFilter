@@ -111,6 +111,8 @@ private:
     void normalizeWeights();
     void normalizeWeightsParallel();
 
+    void initializeVariables();
+
     PF_Params m_pf_params;
     int64_t m_num_particles; // This is in PF params but's it used enough it's worth having a direct copy
     std::vector<State> m_particles;
@@ -120,6 +122,14 @@ private:
     std::default_random_engine m_rand_eng;
     std::vector<double> m_default_weights; // For fast reallocation of default weights after each resampleSingleThreaded
 
+    // Variables used often so it's worth not initializing them each time
+    State m_pf_estimate;
+    std::vector<double> m_particle_obersvations;
+    std::vector<double> m_cumulative_weights_vector;
+    std::vector<State> m_new_particles; // Tmp storage for resampling
+    std::vector<int64_t> m_mutation_indicies;
+
+    // Multithreading variables
     bool m_use_multithreading = true;
     std::shared_ptr<ThreadPool> m_pool; // For parallel processing
     std::vector<std::vector<int64_t>> m_mutation_indicies_chunks;
@@ -144,10 +154,19 @@ ParticleFilter::ParticleFilter(const PF_Params& pf_params,
         m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(m_num_particles);
     }
 
-    m_particles.resize(m_num_particles);
-    m_particle_weights.resize(m_num_particles);
+    initializeVariables();
 
     this->initialize();
+}
+
+void ParticleFilter::initializeVariables()
+{
+    m_particles.resize(m_num_particles);
+    m_particle_weights.resize(m_num_particles);
+    m_particle_obersvations.resize(m_num_particles, 0.0);
+    m_cumulative_weights_vector.resize(m_num_particles, 0.0);
+    m_new_particles.resize(m_num_particles);
+    m_mutation_indicies.resize(m_num_particles, 0); 
 }
 
 void ParticleFilter::initialize() 
@@ -256,17 +275,17 @@ State ParticleFilter::getXHatSingleThreaded() const
         ZoneScopedN("getXHatSingleThreaded");
     #endif
 
-    static State estimate;
-    estimate.x = 0.0;
-    estimate.y = 0.0;
+    State pf_estimate;
+    pf_estimate.x = 0.0;
+    pf_estimate.y = 0.0;
 
     for (int64_t i = 0; i < m_num_particles; i++) 
     {
-        estimate.x += m_particles[i].x * m_particle_weights[i];
-        estimate.y += m_particles[i].y * m_particle_weights[i];
+        pf_estimate.x += m_particles[i].x * m_particle_weights[i];
+        pf_estimate.y += m_particles[i].y * m_particle_weights[i];
     }
 
-    return estimate;
+    return pf_estimate;
 }
 
 State ParticleFilter::getXHatMultiThreaded() const
@@ -295,20 +314,20 @@ State ParticleFilter::getXHatMultiThreaded() const
         auto future = m_pool->AddTask(computeLocalXHat, std::ref(m_particles), std::ref(m_particle_weights), std::ref(indices_chunk));
         futures.push_back(std::move(future));
     }
-    static State estimate;
-    estimate.x = 0.0;
-    estimate.y = 0.0;
+    State pf_estimate;
+    pf_estimate.x = 0.0;
+    pf_estimate.y = 0.0;
     m_pool->waitUntilAllTasksFinished();
 
     // Combine local xHats
     for (auto& future : futures)
     {
         const State local_estimate = future.get();
-        estimate.x += local_estimate.x;
-        estimate.y += local_estimate.y;
+        pf_estimate.x += local_estimate.x;
+        pf_estimate.y += local_estimate.y;
     }
 
-    return estimate;
+    return pf_estimate;
 }
 
 void ParticleFilter::mutateParticlesSingleThreded(const std::vector<double>& std_dev)
@@ -413,17 +432,16 @@ void ParticleFilter::updateWeightsSingleThreaded(const double observation, const
         ZoneScopedN("updateWeightsSingleThreaded");
     #endif
 
-    static std::vector<double> particle_obersvations(m_num_particles, 0.0); 
     for (int64_t i = 0; i < m_num_particles; i++) 
     {
-        particle_obersvations[i] = sensorFunction(m_particles[i]);
+        m_particle_obersvations[i] = sensorFunction(m_particles[i]);
     }
 
     for (int64_t i = 0; i < m_num_particles; i++) 
     {
         m_particle_weights[i] = m_likelihood_function(
             observation,
-            particle_obersvations[i], 
+            m_particle_obersvations[i], 
             sensor_std
         );
     }
@@ -457,11 +475,10 @@ void ParticleFilter::updateWeightsMultiThreaded(const double observation, const 
     };
 
     // Run sensor function in parallel
-    static std::vector<double> particle_obersvations(m_num_particles, 0.0); 
     std::vector<std::future<void>> futures;
     for (const auto& indices_chunk : m_mutation_indicies_chunks)
     {
-        auto future = m_pool->AddTask(runParticlesThroughSensorFunction, std::ref(m_particles), std::ref(particle_obersvations), std::ref(indices_chunk));
+        auto future = m_pool->AddTask(runParticlesThroughSensorFunction, std::ref(m_particles), std::ref(m_particle_obersvations), std::ref(indices_chunk));
         futures.push_back(std::move(future));
     }
     m_pool->waitUntilAllTasksFinished();
@@ -469,7 +486,7 @@ void ParticleFilter::updateWeightsMultiThreaded(const double observation, const 
     // Get likelihoods in parallel
     for (const auto& indices_chunk : m_mutation_indicies_chunks)
     {
-        auto future = m_pool->AddTask(computeLikelihoods, observation, sensor_std, std::ref(particle_obersvations), std::ref(m_particle_weights), std::ref(indices_chunk));
+        auto future = m_pool->AddTask(computeLikelihoods, observation, sensor_std, std::ref(m_particle_obersvations), std::ref(m_particle_weights), std::ref(indices_chunk));
         futures.push_back(std::move(future));
     }
     m_pool->waitUntilAllTasksFinished();
@@ -484,13 +501,11 @@ void ParticleFilter::resampleSingleThreaded()
     #endif
 
     // Get the cumulative particle weights
-    static std::vector<double> cumulative_weights_vector = std::vector<double>(m_num_particles, 0);
-
     double cumulative_sum = 0.0;
     for (int64_t i = 0; i < m_num_particles; i++)
     {
         cumulative_sum += m_particle_weights[i];
-        cumulative_weights_vector[i] = cumulative_sum;
+        m_cumulative_weights_vector[i] = cumulative_sum;
     }
 
     // Generate values from 0.0 to 1/N
@@ -501,25 +516,23 @@ void ParticleFilter::resampleSingleThreaded()
 
     // Now we make the wheel. Spin to win!
     int64_t index_candidate = 0;
-    std::vector<int64_t> mutation_indicies(m_num_particles, 0);
     for (int64_t spoke_index = 0; spoke_index < m_num_particles; spoke_index++)
     {
         double wheel_spoke = wheel_spoke_start + static_cast<double>(wheel_spoke_step * static_cast<double>(spoke_index));
-        while ((wheel_spoke - cumulative_weights_vector[index_candidate]) > 1e-10)
+        while ((wheel_spoke - m_cumulative_weights_vector[index_candidate]) > 1e-10)
         {
             index_candidate += 1;
         }
-        mutation_indicies[spoke_index]  = index_candidate;
+        m_mutation_indicies[spoke_index]  = index_candidate;
     }
 
     // Mutate particles with wheel selections
-    static std::vector<State> new_particles(m_num_particles);
     for (int64_t index = 0; index < m_num_particles; index++)
     {
-        new_particles[index] = m_particles[mutation_indicies[index]];
+        m_new_particles[index] = m_particles[m_mutation_indicies[index]];
     }
 
-    m_particles = new_particles;
+    m_particles = m_new_particles;
     m_particle_weights = m_default_weights;
 }
 
@@ -566,39 +579,34 @@ void ParticleFilter::resampleMultiThreaded()
             new_particles[index] = old_particles[mutation_indicies[index]];
         }
     };
-
-    static std::vector<double> cumulative_weights_vector = std::vector<double>(m_num_particles, 0);
     
-    workEfficientParallelPrefixSum(m_particle_weights, cumulative_weights_vector);
+    workEfficientParallelPrefixSum(m_particle_weights, m_cumulative_weights_vector);
 
     // Generate values from 0.0 to 1/N
-    const double cumulative_sum = cumulative_weights_vector.back();
+    const double cumulative_sum = m_cumulative_weights_vector.back();
     const double wheel_spoke_step = cumulative_sum / static_cast<double>(m_num_particles);
     std::uniform_real_distribution<double> distribution{0.0, wheel_spoke_step};
     double wheel_spoke_start = distribution(m_rand_eng);
 
     // Mutation indicies for next generation
-    static std::vector<int64_t> mutation_indicies(m_num_particles, 0); 
-
     // Run resampling in parallel
     std::vector<std::future<void>> futures;
     for (const auto& indices_chunk : m_mutation_indicies_chunks)
     {
-        auto future = m_pool->AddTask(resampleChunk, std::ref(cumulative_weights_vector), wheel_spoke_start, wheel_spoke_step, std::ref(mutation_indicies), std::ref(indices_chunk));
+        auto future = m_pool->AddTask(resampleChunk, std::ref(m_cumulative_weights_vector), wheel_spoke_start, wheel_spoke_step, std::ref(m_mutation_indicies), std::ref(indices_chunk));
         futures.push_back(std::move(future));
     }
     m_pool->waitUntilAllTasksFinished();
 
     // Mutate particles with wheel selections
-    static std::vector<State> new_particles(m_num_particles);
     for (const auto& indices_chunk : m_mutation_indicies_chunks)
     {
-        auto future = m_pool->AddTask(assignNewParticles, std::ref(mutation_indicies), std::ref(m_particles), std::ref(new_particles), std::ref(indices_chunk));
+        auto future = m_pool->AddTask(assignNewParticles, std::ref(m_mutation_indicies), std::ref(m_particles), std::ref(m_new_particles), std::ref(indices_chunk));
         futures.push_back(std::move(future));
     }
     m_pool->waitUntilAllTasksFinished();
 
-    m_particles = new_particles;
+    m_particles = m_new_particles;
     m_particle_weights = m_default_weights;
 }
 
