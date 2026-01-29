@@ -1,14 +1,14 @@
 # ============================
 #  Compiler selection
 #  Usage:
-#     make            → builds with g++
-#     make CC=clang++ → builds with clang++
+#     make            | builds with g++
+#     make CC=clang++ | builds with clang++
 #  Tracy toggle
 #  Usage:
-#     make tracy=1   → enable Tracy
+#     make tracy=1    | enable Tracy
 # ============================
 
-CC ?= g++
+CXX ?= g++
 
 # ============================
 #  Project structure
@@ -34,19 +34,22 @@ endif
 #  Compiler-specific flags
 # ============================
 
-COMMON_FLAGS := -std=c++23 -g
+COMMON_FLAGS := -std=c++23
 LDFLAGS := -lpthread
 
 # MinGW-specific libs when Tracy is enabled
-ifeq ($(CC),g++)
+ifeq ($(CXX),g++)
     ifeq ($(tracy),1)
-        LDFLAGS += -lws2_32 -ldbghelp
+        LDFLAGS += -lws2_32 -ldbghelp -g
     endif
 endif
 
 # Clang-specific flags
-ifeq ($(CC),clang++)
+ifeq ($(CXX),clang++)
     COMMON_FLAGS += -fsanitize=thread
+    ifeq ($(tracy),1)
+        LDFLAGS += -g
+    endif
 endif
 
 # ============================
@@ -56,11 +59,4 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(SRC) $(TRACY_OBJS)
-	$(CC) $(COMMON_FLAGS) $(TRACY_FLAGS) $^ -o $@ $(LDFLAGS)
-
-# ============================
-#  Cleanup
-# ============================
-
-clean:
-	rm -f $(TARGET)
+	$(CXX) $(COMMON_FLAGS) $(TRACY_FLAGS) $(LDFLAGS) $^ -o $@ 
