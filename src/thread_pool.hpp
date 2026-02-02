@@ -38,6 +38,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <mutex>
 #include <future>
 #include <thread>
@@ -46,8 +48,6 @@
 #include <functional>
 #include <cmath>
 #include <atomic>
-
-#pragma once
 
 class ThreadPool{
 public:

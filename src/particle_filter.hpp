@@ -38,12 +38,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <random>
 #include <iomanip>
 #include <numbers>
+#include <fstream>
 
 #ifdef TRACY_ENABLE
     #include "tracy/Tracy.hpp"
@@ -52,8 +55,7 @@
 // Internal includes
 #include "thread_pool.hpp"
 #include "state_functions.hpp"
-
-#pragma once
+#include "helper_functions.hpp"
 
 // This exists to as a fast seed generator for per-thread random engines
 // Aka to make particle mutation faster

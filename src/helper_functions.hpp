@@ -42,84 +42,43 @@
 
 #include <cmath>
 #include <random>
+#include <fstream>
+#include <iostream>
 
-double X_MIN = 0.0;
-double Y_MIN = 0.0;
+#include "state_functions.hpp"
 
-double X_MAX = 100.0;
-double Y_MAX = 100.0;
-
-double MAX_STEP_SIZE = 2.0;
-
-std::random_device rd;
-std::mt19937 rng_generator(rd());
-
-std::uniform_real_distribution<double> x_waypoint_dist(X_MIN, X_MAX);
-std::uniform_real_distribution<double> y_waypoint_dist(Y_MIN, Y_MAX);
-
-struct State
+void saveStateToCSV(const State& state, const std::string& filename) 
 {
-    double x;
-    double y;
-};
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
 
-double sensorFunction(const State& state) 
-{
-    // Assume the sensor is at the origin (0,0) and measures distance
-    return std::sqrt(std::pow(state.x - 0.0, 2) + std::pow(state.y - 0.0, 2));
-}   
-
-double likelihoodFunction(const double sensor_observation, const double estimate_observation, const double sensor_std) 
-{
-    const double diff_over_sig = (sensor_observation - estimate_observation)/sensor_std;
-
-    // We don't care about the demominator since we will normalize later
-    return std::exp(-0.5 * (std::pow(diff_over_sig, 2)));
+    file << "i,x,y" << "\n";
+    file << 0 << "," << state.x << "," << state.y << "\n";
+    file.close();
 }
 
-// Generate a new random waypoint
-State generateWaypoint()
+void saveSensorReadingToCSV(const double readings, const std::string& filename) 
 {
-    State wp;
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
 
-    wp.x = x_waypoint_dist(rng_generator);
-    wp.y = y_waypoint_dist(rng_generator);
-    return wp;
+    file << "reading" << "\n";
+    file << readings << "\n";
+    file.close();
 }
 
-void moveActualState(State& state, State& waypoint)
+void calculateAndPrintError(const State& estimated_state, const State& true_state)
 {
-    double dx = waypoint.x - state.x;
-    double dy = waypoint.y - state.y;
-    double dist = std::sqrt(dx * dx + dy * dy);
+    double error_x = estimated_state.x - true_state.x;
+    double error_y = estimated_state.y - true_state.y;
 
-    if (dist >= MAX_STEP_SIZE)
-    {
-        state.x += (dx / dist) * MAX_STEP_SIZE;
-        state.y += (dy / dist) * MAX_STEP_SIZE;
-    }
-    else
-    {
-        state.x = waypoint.x;
-        state.y = waypoint.y;
-        waypoint = generateWaypoint();
-    }
-}
+    double l2_error = std::sqrt(error_x * error_x + error_y * error_y );
 
-void moveEstimatedState(State& state,const State& waypoint)
-{
-    double dx = waypoint.x - state.x;
-    double dy = waypoint.y - state.y;
-    double dist = std::sqrt(dx * dx + dy * dy);
-
-    if (dist >= MAX_STEP_SIZE)
-    {
-        state.x += (dx / dist) * MAX_STEP_SIZE;
-        state.y += (dy / dist) * MAX_STEP_SIZE;
-    }
-    else
-    {
-        state.x = waypoint.x;
-        state.y = waypoint.y;
-    }
+    std::cout << "    Error: " << l2_error << "\n";
 }
