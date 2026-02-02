@@ -40,7 +40,6 @@
 
 #pragma once
 
-#include <cmath>
 #include <random>
 
 constexpr double X_MIN = 0.0;

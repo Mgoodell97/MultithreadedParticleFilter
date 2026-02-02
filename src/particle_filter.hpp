@@ -40,22 +40,9 @@
 
 #pragma once
 
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <random>
-#include <iomanip>
-#include <numbers>
-#include <fstream>
-
-#ifdef TRACY_ENABLE
-    #include "tracy/Tracy.hpp"
-#endif
-
 // Internal includes
 #include "thread_pool.hpp"
 #include "state_functions.hpp"
-#include "helper_functions.hpp"
 
 struct PF_Params
 {

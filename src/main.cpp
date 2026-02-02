@@ -39,6 +39,7 @@
 // SOFTWARE.
 
 #include <iostream>
+#include <iomanip>
 
 #ifdef TRACY_ENABLE
     #include "tracy/Tracy.hpp"
