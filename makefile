@@ -23,7 +23,7 @@ SRC := $(wildcard $(SRC_DIR)/*.cpp)
 MAIN_SRC := $(SRC_DIR)/main.cpp
 LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))
 
-TRACY_DIR := third_party/tracy/public
+TRACY_DIR := tracy/public
 TRACY_SRC := $(TRACY_DIR)/TracyClient.cpp
 
 TARGET := main.exe
