@@ -38,12 +38,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <fstream>
+#include <iostream>
 
-#include "state_functions.hpp"
+#include "helper_functions.hpp"
 
-void saveStateToCSV(const State& state, const std::string& filename);
+void saveStateToCSV(const State& state, const std::string& filename) 
+{
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
 
-void saveSensorReadingToCSV(const double readings, const std::string& filename);
+    file << "i,x,y" << "\n";
+    file << 0 << "," << state.x << "," << state.y << "\n";
+    file.close();
+}
 
-void calculateAndPrintError(const State& estimated_state, const State& true_state);
+void saveSensorReadingToCSV(const double readings, const std::string& filename) 
+{
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    file << "reading" << "\n";
+    file << readings << "\n";
+    file.close();
+}
+
+void calculateAndPrintError(const State& estimated_state, const State& true_state)
+{
+    double error_x = estimated_state.x - true_state.x;
+    double error_y = estimated_state.y - true_state.y;
+
+    double l2_error = std::sqrt(error_x * error_x + error_y * error_y );
+
+    std::cout << "    Error: " << l2_error << "\n";
+}

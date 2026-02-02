@@ -38,12 +38,71 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
-
 #include "state_functions.hpp"
 
-void saveStateToCSV(const State& state, const std::string& filename);
+std::random_device rd;
+std::mt19937 rng_generator(rd());
 
-void saveSensorReadingToCSV(const double readings, const std::string& filename);
+std::uniform_real_distribution<double> x_waypoint_dist(X_MIN, X_MAX);
+std::uniform_real_distribution<double> y_waypoint_dist(Y_MIN, Y_MAX);
 
-void calculateAndPrintError(const State& estimated_state, const State& true_state);
+double sensorFunction(const State& state) 
+{
+    // Assume the sensor is at the origin (0,0) and measures distance
+    return std::sqrt(std::pow(state.x - 0.0, 2) + std::pow(state.y - 0.0, 2));
+}   
+
+double likelihoodFunction(const double sensor_observation, const double estimate_observation, const double sensor_std) 
+{
+    const double diff_over_sig = (sensor_observation - estimate_observation)/sensor_std;
+
+    // We don't care about the demominator since we will normalize later
+    return std::exp(-0.5 * (std::pow(diff_over_sig, 2)));
+}
+
+// Generate a new random waypoint
+State generateWaypoint()
+{
+    State wp;
+
+    wp.x = x_waypoint_dist(rng_generator);
+    wp.y = y_waypoint_dist(rng_generator);
+    return wp;
+}
+
+void moveActualState(State& state, State& waypoint)
+{
+    double dx = waypoint.x - state.x;
+    double dy = waypoint.y - state.y;
+    double dist = std::sqrt(dx * dx + dy * dy);
+
+    if (dist >= MAX_STEP_SIZE)
+    {
+        state.x += (dx / dist) * MAX_STEP_SIZE;
+        state.y += (dy / dist) * MAX_STEP_SIZE;
+    }
+    else
+    {
+        state.x = waypoint.x;
+        state.y = waypoint.y;
+        waypoint = generateWaypoint();
+    }
+}
+
+void moveEstimatedState(State& state,const State& waypoint)
+{
+    double dx = waypoint.x - state.x;
+    double dy = waypoint.y - state.y;
+    double dist = std::sqrt(dx * dx + dy * dy);
+
+    if (dist >= MAX_STEP_SIZE)
+    {
+        state.x += (dx / dist) * MAX_STEP_SIZE;
+        state.y += (dy / dist) * MAX_STEP_SIZE;
+    }
+    else
+    {
+        state.x = waypoint.x;
+        state.y = waypoint.y;
+    }
+}
