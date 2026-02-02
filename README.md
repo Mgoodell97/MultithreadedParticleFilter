@@ -33,3 +33,84 @@ The main steps of a particle filter regardless of the number of threads is:
 1. Mutate the particles for new exploration
 
 ![Results](particle_filter_animation.gif)
+
+# Building and running
+
+Below are concise, copy-pasteable commands for common build+run scenarios. The Makefile can be used on both Windows (MinGW) and Linux. 
+
+Common variables:
+- CXX: compiler (default g++)
+- tracy=1: enable Tracy profiler support 
+- sanitize=1: enable ThreadSanitizer (clang only)
+
+### 1 Build using the Makefile (default g++)
+Windows (MinGW):
+```
+mingw32-make
+```
+Linux:
+```
+make
+```
+
+### 2 Build with Tracy enabled
+Windows (MinGW):
+```
+mingw32-make tracy=1
+```
+Linux:
+```
+make tracy=1
+```
+
+### 3 Build with clang++
+Basic (no Tracy):
+```
+make CXX=clang++
+```
+With Tracy:
+```
+make CXX=clang++ tracy=1
+```
+With ThreadSanitizer (clang only):
+```
+make CXX=clang++ sanitize=1
+```
+With both sanitize and Tracy:
+```
+make CXX=clang++ sanitize=1 tracy=1
+```
+
+### 4 Direct g++ / clang++ commands (no Makefile)
+MinGW g++ (no Tracy):
+```
+g++ main.cpp -o main.exe -lpthread -std=c++23
+```
+MinGW g++ with Tracy:
+```
+g++ main.cpp tracy/public/TracyClient.cpp -Itracy/public -std=c++23 -DTRACY_ENABLE -g -o main.exe -lws2_32 -ldbghelp -lpthread
+```
+clang++ (Linux) with ThreadSanitizer:
+```
+clang++ -fsanitize=thread -std=c++23 main.cpp -o main -lpthread
+```
+clang++ with Tracy and sanitizer:
+```
+clang++ -fsanitize=thread -g -std=c++23 main.cpp tracy/public/TracyClient.cpp -Itracy/public -DTRACY_ENABLE -o main -lpthread
+```
+
+### 5 Run the program
+Windows:
+```
+main.exe
+```
+
+Linux / macOS:
+```
+./main.exe
+```
+
+### Notes
+- ThreadSanitizer is supported only with clang on Linux.
+- Tracy requires running the Tracy profiler UI (Tracy) to capture profiles; build with tracy=1 and run the UI before running the program to see timeline events.
+- If running the sanitizer Tracy you will get warnings about the thread safety in Tracy this is not a problem for this code. 

@@ -38,22 +38,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-// For mingw without tracy 
-// mingw32-make tracy=1
-// Set-Alias make mingw32-make
-// pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
-// g++ main.cpp -o main -lpthread -std=c++23
-
-// For mingw with tracy 
-// g++ main.cpp tracy/public/TracyClient.cpp -Itracy/public -std=c++23 -DTRACY_ENABLE -g -o main.exe -lws2_32 -ldbghelp -lpthread
-
-// For clang without tracy and track down race conditions
-// clang++ -fsanitize=thread -std=c++23 main.cpp -o main -lpthread
-
-// For clang with tracy and track down race conditions
-// clang++ -fsanitize=thread -g -std=c++23 main.cpp -o main -lpthread -DTRACY_ENABLE tracy/public/TracyClient.cpp -Itracy/public
-
 #include <thread>
 #include <iostream>
 

@@ -6,6 +6,9 @@
 #  Tracy toggle
 #  Usage:
 #     make tracy=1    | enable Tracy
+#  Sanitize toggle (only for clang++)
+#  Usage:
+#     make sanitize=1 | enable ThreadSanitizer
 # ============================
 
 CXX ?= g++
@@ -34,7 +37,9 @@ endif
 #  Compiler-specific flags
 # ============================
 
-COMMON_FLAGS := -std=c++23
+CPP_VERSION := -std=c++23
+COMMON_FLAGS := 
+SANTIZE_FLAGS :=
 LDFLAGS := -lpthread
 
 # MinGW-specific libs when Tracy is enabled
@@ -46,7 +51,9 @@ endif
 
 # Clang-specific flags
 ifeq ($(CXX),clang++)
-    COMMON_FLAGS += -fsanitize=thread
+    ifeq ($(sanitize),1)
+        SANTIZE_FLAGS += -fsanitize=thread
+    endif
     ifeq ($(tracy),1)
         LDFLAGS += -g
     endif
@@ -59,4 +66,4 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(SRC) $(TRACY_OBJS)
-	$(CXX) $(COMMON_FLAGS) $(TRACY_FLAGS) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CPP_VERSION) $^ -o $@ $(TRACY_FLAGS) $(COMMON_FLAGS) $(LDFLAGS) $(SANTIZE_FLAGS)
