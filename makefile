@@ -17,10 +17,10 @@ CXX ?= g++
 #  Project structure
 # ============================
 
-SRC_DIR := .
+SRC_DIR := src
 TRACY_DIR := tracy/public
 
-SRC := $(SRC_DIR)/main.cpp
+SRC := $(wildcard $(SRC_DIR)/*.cpp)
 TRACY_SRC := $(TRACY_DIR)/TracyClient.cpp
 
 TARGET := main.exe

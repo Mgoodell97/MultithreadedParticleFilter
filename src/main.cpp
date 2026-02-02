@@ -38,14 +38,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <thread>
 #include <iostream>
+#include <iomanip>
 
 #ifdef TRACY_ENABLE
     #include "tracy/Tracy.hpp"
 #endif
 
 // Internal includes
+#include "helper_functions.hpp"
 #include "state_functions.hpp"
 #include "particle_filter.hpp"
 
