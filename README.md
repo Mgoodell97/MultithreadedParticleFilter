@@ -43,7 +43,7 @@ Common variables:
 - tracy=1: enable Tracy profiler support 
 - sanitize=1: enable ThreadSanitizer (clang only)
 
-### 1 Build using the Makefile (default g++)
+### 1.1 Build using the Makefile (default g++)
 Windows (MinGW):
 ```
 mingw32-make
@@ -53,7 +53,7 @@ Linux:
 make
 ```
 
-### 2 Build with Tracy enabled
+### 1.2 Build with Tracy enabled
 Windows (MinGW):
 ```
 mingw32-make tracy=1
@@ -63,7 +63,7 @@ Linux:
 make tracy=1
 ```
 
-### 3 Build with clang++
+### 1.3 Build with clang++
 Basic (no Tracy):
 ```
 make CXX=clang++
@@ -81,7 +81,7 @@ With both sanitize and Tracy:
 make CXX=clang++ sanitize=1 tracy=1
 ```
 
-### 4 Direct g++ / clang++ commands (no Makefile)
+### 1.4 Direct g++ / clang++ commands (no Makefile)
 MinGW g++ (no Tracy):
 ```
 g++ main.cpp -o main.exe -lpthread -std=c++23
@@ -99,7 +99,7 @@ clang++ with Tracy and sanitizer:
 clang++ -fsanitize=thread -g -std=c++23 main.cpp tracy/public/TracyClient.cpp -Itracy/public -DTRACY_ENABLE -o main -lpthread
 ```
 
-### 5 Run the program
+### 2. Run the program
 Windows:
 ```
 main.exe
