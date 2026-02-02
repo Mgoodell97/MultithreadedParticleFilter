@@ -1,7 +1,8 @@
 *.csv
 tracy/*
+third_party/*
 *.csv
 *.exe
-main
+main.exe
 *.mp4
-
+main

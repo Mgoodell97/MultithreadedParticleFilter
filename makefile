@@ -18,9 +18,12 @@ CXX ?= g++
 # ============================
 
 SRC_DIR := src
-TRACY_DIR := tracy/public
-
 SRC := $(wildcard $(SRC_DIR)/*.cpp)
+
+MAIN_SRC := $(SRC_DIR)/main.cpp
+LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))
+
+TRACY_DIR := tracy/public
 TRACY_SRC := $(TRACY_DIR)/TracyClient.cpp
 
 TARGET := main.exe
@@ -60,10 +63,34 @@ ifeq ($(CXX),clang++)
 endif
 
 # ============================
+#  GoogleTest
+# ============================
+
+GTEST_DIR := third_party/googletest/googletest
+GTEST_SRC := $(GTEST_DIR)/src/gtest-all.cc
+GTEST_MAIN := $(GTEST_DIR)/src/gtest_main.cc
+GTEST_INCLUDE := -I$(GTEST_DIR)/include -I$(GTEST_DIR)
+
+TEST_DIR := $(SRC_DIR)/tests
+TEST_SRC := $(wildcard $(TEST_DIR)/*.cpp)
+
+TEST_TARGET := tests.exe
+PROJECT_INCLUDE := -I$(SRC_DIR)
+
+# ============================
 #  Final build rule
 # ============================
 
 all: $(TARGET)
 
-$(TARGET): $(SRC) $(TRACY_OBJS)
-	$(CXX) $(CPP_VERSION) $^ -o $@ $(TRACY_FLAGS) $(COMMON_FLAGS) $(LDFLAGS) $(SANTIZE_FLAGS)
+$(TARGET): $(MAIN_SRC) $(LIB_SRC) $(TRACY_OBJS)
+	$(CXX) $(CPP_VERSION) $^ -o $@ \
+	    $(TRACY_FLAGS) $(COMMON_FLAGS) $(LDFLAGS) $(SANTIZE_FLAGS)
+
+$(TEST_TARGET): $(TEST_SRC) $(LIB_SRC) $(GTEST_SRC) $(GTEST_MAIN)
+	$(CXX) $(CPP_VERSION) $^ -o $@ \
+	    $(GTEST_INCLUDE) $(PROJECT_INCLUDE) -lpthread
+
+.PHONY: test
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
