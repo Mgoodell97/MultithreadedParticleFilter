@@ -40,6 +40,9 @@
 
 
 // For mingw without tracy 
+// mingw32-make tracy=1
+// Set-Alias make mingw32-make
+// pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
 // g++ main.cpp -o main -lpthread -std=c++23
 
 // For mingw with tracy 
