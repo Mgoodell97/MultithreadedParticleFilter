@@ -1,6 +1,4 @@
 *.csv
-tracy/*
-third_party/*
 *.csv
 *.exe
 main.exe
