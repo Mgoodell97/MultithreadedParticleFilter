@@ -46,4 +46,4 @@ void saveStateToCSV(const State& state, const std::string& filename);
 
 void saveSensorReadingToCSV(const double readings, const std::string& filename);
 
-void calculateAndPrintError(const State& estimated_state, const State& true_state);
+double calculateError(const State& estimated_state, const State& true_state);

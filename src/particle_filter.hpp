@@ -52,7 +52,8 @@ struct PF_Params
     std::vector<double> particle_propogation_std{5,5};
 };
 
-class ParticleFilter {
+class ParticleFilter 
+{
 public:
     ParticleFilter(const PF_Params& pf_params,
                    std::function<double(const double, const double, const double)> likelihood_function,

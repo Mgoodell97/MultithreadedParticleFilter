@@ -112,8 +112,9 @@ int main() {
             saveStateToCSV(estimated_state, "results\\estimated_results\\estimated_state_" + std::to_string(i) + ".csv");
             pf.saveParticleStatesToFile("results\\pf_estimates\\pf_estimates_" + std::to_string(i) + ".csv");
 
-            calculateAndPrintError(estimated_state, robot_state);
-
+            double l2_error = calculateError(estimated_state, robot_state);
+            std::cout << "    Error: " << l2_error << "\n";
+            
             pf.propogateState(waypoint);                  // 2. Move particles based on control input
             pf.resample();                                // 3. Resample particles based on weights
             pf.mutateParticles(particle_propogation_std); // 4. Add some noise to particles
