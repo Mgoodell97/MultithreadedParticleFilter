@@ -43,6 +43,19 @@ Common variables:
 - tracy=1: enable Tracy profiler support 
 - sanitize=1: enable ThreadSanitizer (clang only)
 
+// Windows
+cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+
+clean
+rm -r -force build
+
+// Linux
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DSANITIZE=ON -DTRACY_ENABLE=ON
+cmake --build build
+
+
 ### 1.1 Build using the Makefile (default g++)
 Windows (MinGW):
 ```

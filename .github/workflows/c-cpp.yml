@@ -15,8 +15,21 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y clang cmake ninja-build
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -G Ninja \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DSANITIZE=OFF \
+          -DTRACY_ENABLE=OFF
+
     - name: Build
-      run: make
+      run: cmake --build build --config Release
 
     - name: Run Tests
-      run: make test
+      run: ./build/tests
