@@ -4,3 +4,4 @@
 main.exe
 *.mp4
 main
+build/*

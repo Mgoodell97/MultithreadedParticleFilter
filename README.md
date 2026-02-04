@@ -3,7 +3,7 @@
 This repository provides a hands-on example of a multithreaded particle filter, inspired by the core concepts outlined in [Particle Filters: A Hands-On Tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC7826670/). The implementation is written in modern C++, with the flexibility to toggle multithreading on or off through a simple boolean flag—making it easy to experiment with both single-threaded and parallel execution.
 
 # Robot State & Sensor Model
-In this demonstration, the system estimates a 2D state consisting of  coordinates. The simulated sensor is modeled as a distance sensor that measures , with its base fixed at the origin. This setup provides a straightforward yet illustrative way to explore how particle filters integrate sensor readings into state estimation.
+In this example, the system estimates a 2D state consisting of xy coordinates. The simulated sensor is modeled as a distance sensor that measures, with its base fixed at the origin. This setup provides a straightforward yet illustrative way to explore how particle filters integrate sensor readings into state estimation.
 
 Robot state: 
 ```math
@@ -42,6 +42,19 @@ Common variables:
 - CXX: compiler (default g++)
 - tracy=1: enable Tracy profiler support 
 - sanitize=1: enable ThreadSanitizer (clang only)
+
+// Windows
+cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+
+clean
+rm -r -force build
+
+// Linux
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DSANITIZE=ON -DTRACY_ENABLE=ON
+cmake --build build
+
 
 ### 1.1 Build using the Makefile (default g++)
 Windows (MinGW):

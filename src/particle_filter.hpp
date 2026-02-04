@@ -52,7 +52,8 @@ struct PF_Params
     std::vector<double> particle_propogation_std{5,5};
 };
 
-class ParticleFilter {
+class ParticleFilter 
+{
 public:
     ParticleFilter(const PF_Params& pf_params,
                    std::function<double(const double, const double, const double)> likelihood_function,
@@ -60,12 +61,20 @@ public:
                    const bool use_multithreading = true);
     void initialize();
 
-    // Core PF functions
-    State getXHat() const;
-    void mutateParticles(const std::vector<double>& std_dev);
-    void propogateState(const State& waypoint);
+    // 1. Update weights based on sensor reading
     void updateWeights(const double observation, const double sensor_std);
+
+    // 1.5 Best time to get estimate before moving particles
+    State getXHat() const;
+
+    // 2. Move particles based on control input
+    void propogateState(const State& waypoint);
+
+    // 3. Resample particles based on weights (keep the best and discard the rest)
     void resample();
+
+    // 4. Mutate particles to add randomness to duplucates after resampling
+    void mutateParticles(const std::vector<double>& std_dev);
 
     // For visualizations
     void saveParticleStatesToFile(const std::string& filename) const;
