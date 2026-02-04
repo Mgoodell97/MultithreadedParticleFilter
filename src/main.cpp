@@ -50,7 +50,8 @@
 #include "state_functions.hpp"
 #include "particle_filter.hpp"
 
-int main() {
+int main() 
+{
     std::cout << std::setprecision(17);
 
     #ifdef TRACY_ENABLE
