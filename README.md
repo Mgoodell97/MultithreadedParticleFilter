@@ -27,8 +27,8 @@ The "robot" in this example follows a simple but dynamic routine:
 The main steps of a particle filter regardless of the number of threads is:
 
 1. Update weights based on sensor reading
-1. Move particles based on control input
     1. Get particle filter estimate $\hat{x}$.
+1. Move particles based on control input
 1. Resample particles based on weights
 1. Mutate the particles for new exploration
 
