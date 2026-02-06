@@ -43,16 +43,30 @@ Common variables:
 - tracy=1: enable Tracy profiler support 
 - sanitize=1: enable ThreadSanitizer (clang only)
 
+// install mingw
+https://www.mingw-w64.org/downloads/#mingw-w64-builds
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
+
+pip install gcovr
+
+// submodules
+git submodule update --init --recursive
+
+// Windows add this to your system env PATH
+C:\msys64\mingw64\bin
+
 // Windows
 cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
 cmake -B build -G "MinGW Makefiles"
 cmake --build build
+cmake --build build --config Debug // for coverage // maybe not
 
 clean
 rm -r -force build
 
 // Linux
 cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DSANITIZE=ON -DTRACY_ENABLE=ON
+cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DCOVERAGE=ON
 cmake --build build
 
 
