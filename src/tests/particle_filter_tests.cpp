@@ -29,19 +29,20 @@ protected:
     State m_gt_robot_state;
 };
 
-class ParticleFilterParamsTests: public ParticleFilterTests, public testing::WithParamInterface<bool> {};
+class ParticleFilterParamsTests: public ParticleFilterTests, public testing::WithParamInterface<PF_THREAD_MODE> {};
 
 TEST_F(ParticleFilterTests, TestConstructionAndInitalization) 
 {
     bool run_pf_in_parallel = true;
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
 }
 
 TEST_P(ParticleFilterParamsTests, TestGetXHat)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
     
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     State estimate = test_pf.getXHat();
 
     State initial_state_estimate = {
@@ -55,9 +56,10 @@ TEST_P(ParticleFilterParamsTests, TestGetXHat)
 
 TEST_P(ParticleFilterParamsTests, TestUpdateWeights)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
     State estimate = test_pf.getXHat();
 
@@ -68,9 +70,10 @@ TEST_P(ParticleFilterParamsTests, TestUpdateWeights)
 
 TEST_P(ParticleFilterParamsTests, TestPropogateState)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
     test_pf.propogateState({m_waypoint}); // Limited by MAX_STEP_SIZE
     State estimate = test_pf.getXHat();
@@ -83,10 +86,11 @@ TEST_P(ParticleFilterParamsTests, TestPropogateState)
 
 TEST_P(ParticleFilterParamsTests, TestFullParticleFilterLoop)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
     double expected_error = 0.0;
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     for (uint16_t i=0; i<m_resamples;i++)
     {
         test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
@@ -104,4 +108,4 @@ TEST_P(ParticleFilterParamsTests, TestFullParticleFilterLoop)
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(true,false));
+INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL,PF_THREAD_MODE::SINGLE_THREADED));

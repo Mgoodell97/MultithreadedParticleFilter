@@ -61,11 +61,10 @@ int main()
     #endif
 
     // Particle params
-    bool run_pf_in_parallel = true;
     int64_t resamples = 100;
     PF_Params pf_params;
     std::vector<double> particle_propogation_std{5,5};
-    ParticleFilter pf{pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter pf{pf_params, &likelihoodFunction, &moveEstimatedState};
 
     // Sensor noise
     State robot_state = generateWaypoint(); // Abusing this function

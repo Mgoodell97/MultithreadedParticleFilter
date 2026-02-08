@@ -66,20 +66,25 @@ static uint64_t splitmix64(uint64_t &seed)
 
 ParticleFilter::ParticleFilter(const PF_Params& pf_params,
                                std::function<double(const double, const double, const double)> likelihood_function,
-                               std::function<void(State&, const State&)> propagate_state_function,
-                               const bool use_multithreading): 
+                               std::function<void(State&, const State&)> propagate_state_function): 
     m_pf_params(pf_params), 
     m_num_particles(pf_params.num_of_particles),
     m_default_weights(m_pf_params.num_of_particles, 1.0 / static_cast<double>(m_pf_params.num_of_particles)),
     m_likelihood_function(likelihood_function),
-    m_propagate_state_function(propagate_state_function), 
-    m_use_multithreading(use_multithreading)
+    m_propagate_state_function(propagate_state_function)
 {
-    if (m_use_multithreading)
+    const int64_t num_threads{static_cast<int64_t>(std::thread::hardware_concurrency())};
+    switch(m_pf_params.thread_mode)
     {
-        const int64_t num_threads{static_cast<int64_t>(std::thread::hardware_concurrency())};
-        m_pool = std::make_shared<ThreadPool>(num_threads);
-        m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(m_num_particles);
+        case PF_THREAD_MODE::MULTI_THREADED:
+            m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(num_threads, m_num_particles);
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+            m_pool = std::make_shared<ThreadPool>(num_threads);
+            m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(num_threads, m_num_particles);
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            break;
     }
 
     initializeVariables();
@@ -114,62 +119,83 @@ void ParticleFilter::initialize()
 
 State ParticleFilter::getXHat() const
 {
-    if (m_use_multithreading)
+    switch(m_pf_params.thread_mode)
     {
-        return getXHatMultiThreaded();
+        case PF_THREAD_MODE::MULTI_THREADED:
+            return getXHatMultiThreaded();
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+            return getXHatMultiThreaded();
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            return getXHatSingleThreaded();
+            break;
     }
-    else
-    {
-        return getXHatSingleThreaded();
-    }
+    return State{0.0, 0.0}; // Should never reach here
 }
 
 void ParticleFilter::mutateParticles(const std::vector<double>& std_dev)
 {
-    if (m_use_multithreading)
+    switch(m_pf_params.thread_mode)
     {
-        mutateParticlesMultiThreaded(std_dev);
+        case PF_THREAD_MODE::MULTI_THREADED:
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+            mutateParticlesMultiThreaded(std_dev);
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            mutateParticlesSingleThreded(std_dev);
+            break;
     }
-    else
-    {
-        mutateParticlesSingleThreded(std_dev);
-    }
+    return;
 }
 
 void ParticleFilter::propogateState(const State& waypoint)
 {
-    if (m_use_multithreading)
+    switch(m_pf_params.thread_mode)
     {
-        propogateStateMultiThreaded(waypoint);
+        case PF_THREAD_MODE::MULTI_THREADED:
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+            propogateStateMultiThreaded(waypoint);
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            propogateStateSingleThreaded(waypoint);
+            break;
     }
-    else
-    {
-        propogateStateSingleThreaded(waypoint);
-    }
+    return;
 }
 
 void ParticleFilter::updateWeights(const double observation, const double sensor_std)
 {
-    if (m_use_multithreading)
+    switch(m_pf_params.thread_mode)
     {
-        updateWeightsMultiThreaded(observation, sensor_std);
+        case PF_THREAD_MODE::MULTI_THREADED:
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+            updateWeightsMultiThreaded(observation, sensor_std);
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            updateWeightsSingleThreaded(observation, sensor_std);
+            break;
     }
-    else
-    {
-        updateWeightsSingleThreaded(observation, sensor_std);
-    }
+    return;
 }
 
 void ParticleFilter::resample()
 {
-    if (m_use_multithreading)
+    switch(m_pf_params.thread_mode)
     {
-        resampleMultiThreaded();
+        case PF_THREAD_MODE::MULTI_THREADED:
+            break;
+        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
+             resampleMultiThreaded();
+            break;
+        case PF_THREAD_MODE::SINGLE_THREADED:
+            resampleSingleThreaded();
+            break;
     }
-    else
-    {
-        resampleSingleThreaded();
-    }
+    return;
 }
 
 void ParticleFilter::saveParticleStatesToFile(const std::string& filename) const

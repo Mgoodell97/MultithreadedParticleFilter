@@ -44,12 +44,20 @@
 #include "thread_pool.hpp"
 #include "state_functions.hpp"
 
+enum PF_THREAD_MODE
+{
+    MULTI_THREADED,
+    MULTI_THREADED_WITH_THREAD_POOL,
+    SINGLE_THREADED
+};
+
 struct PF_Params
 {
     int64_t num_of_particles{1000000};
     std::vector<double> starting_state_lower_bound{X_MIN,Y_MIN};
     std::vector<double> starting_state_upper_bound{X_MAX,Y_MAX};
     std::vector<double> particle_propogation_std{5,5};
+    PF_THREAD_MODE thread_mode{PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL};
 };
 
 class ParticleFilter 
@@ -57,8 +65,7 @@ class ParticleFilter
 public:
     ParticleFilter(const PF_Params& pf_params,
                    std::function<double(const double, const double, const double)> likelihood_function,
-                   std::function<void(State&, const State&)> propagate_state_function,
-                   const bool use_multithreading = true);
+                   std::function<void(State&, const State&)> propagate_state_function);
     void initialize();
 
     // 1. Update weights based on sensor reading
@@ -118,7 +125,6 @@ private:
     std::vector<int64_t> m_mutation_indicies;
 
     // Multithreading variables
-    bool m_use_multithreading = true;
     std::shared_ptr<ThreadPool> m_pool; // For parallel processing
     std::vector<std::vector<int64_t>> m_mutation_indicies_chunks;
 };
