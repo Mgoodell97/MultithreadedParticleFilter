@@ -23,6 +23,8 @@ jobs:
     - name: Configure CMake (with coverage)
       run: |
         cmake -B build \
+          -DCMAKE_C_COMPILER=gcc-14 \
+          -DCMAKE_CXX_COMPILER=g++-14 \
           -DSANITIZE=OFF \
           -DTRACY_ENABLE=OFF \
           -DCOVERAGE=ON
