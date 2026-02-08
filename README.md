@@ -124,14 +124,9 @@ Coverage requires that you built with -DCOVERAGE=ON.
 
 ```bash
 ./build/tests
-lcov \
-  --remove coverage.info \
-  "/usr/*" \
-  "*/googletest/*" \
-  "*/gtest/*" \
-  "*/CMakeFiles/*" \
-  --output-file coverage.info
-
+lcov --capture --directory build --output-file coverage.info
+lcov   --gcov-tool gcov-14   --capture   --directory build   --output-file coverage.info   --ignore-errors mismatch   --ignore-errors negative   --rc geninfo_unexecuted_blocks=1
+lcov   --remove coverage.info   "/usr/*"   "*/googletest/*"   "*/gtest/*"   "*/CMakeFiles/*"   --output-file coverage.info
 genhtml coverage.info --output-directory coverage_html
 ```
 

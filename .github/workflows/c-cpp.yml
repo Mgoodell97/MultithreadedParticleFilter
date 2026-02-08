@@ -23,55 +23,35 @@ jobs:
     - name: Configure CMake (with coverage)
       run: |
         cmake -B build \
-          -G Ninja \
-          -DCMAKE_CXX_COMPILER=clang++ \
           -DSANITIZE=OFF \
           -DTRACY_ENABLE=OFF \
           -DCOVERAGE=ON
 
     - name: Build
-      run: cmake --build build --config Debug
+      run: cmake --build build
 
     - name: Run Tests
       run: ./build/tests
 
-    - name: Generate lcov report
+    - name: Generate Coverage (lcov)
       run: |
-        # Capture coverage
-        lcov \
-          --capture \
-          --directory build \
-          --output-file coverage.info \
-          --exclude '*/googletest/*' \
-          --exclude '*/gtest/*' \
-          --exclude '/usr/*' \
-          --exclude '*/CMakeFiles/*'
+        # Capture coverage from the build directory
+        lcov --capture --directory build --output-file coverage.info
 
-        # Optional cleanup pass
-        lcov \
-          --remove coverage.info \
-          "/usr/*" \
-          "*/googletest/*" \
-          "*/gtest/*" \
-          "*/CMakeFiles/*" \
-          --output-file coverage.info
+        # Get coverage data
+        lcov   --gcov-tool gcov-14   --capture   --directory build   --output-file coverage.info   --ignore-errors mismatch   --ignore-errors negative   --rc geninfo_unexecuted_blocks=1
+        lcov   --remove coverage.info   "/usr/*"   "*/googletest/*"   "*/gtest/*"   "*/CMakeFiles/*"   --output-file coverage.info
 
-    - name: Enforce 95% minimum coverage
+        # Generate HTML report
+        genhtml coverage.info --output-directory coverage_html
+
+    - name: Enforce 95% Coverage Threshold
       run: |
         # Extract the line coverage percentage from lcov output
         COVERAGE=$(lcov --summary coverage.info | grep "lines......:" | awk '{print $2}' | sed 's/%//')
 
-        echo "Line coverage: $COVERAGE%"
+        echo "Line coverage: ${COVERAGE}%"
 
         # Fail if below threshold
         THRESHOLD=95
-        if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-          echo "Coverage ($COVERAGE%) is below required threshold ($THRESHOLD%)"
-          exit 1
-        fi
-
-    - name: Upload coverage artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage
-        path: coverage.info
+        awk -v c="$COVERAGE" -v t="$THRESHOLD" 'BEGIN { exit (c < t) }'
