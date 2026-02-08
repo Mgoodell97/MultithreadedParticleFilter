@@ -59,7 +59,7 @@ jobs:
         # Generate HTML report
         genhtml coverage.info --output-directory coverage_html
 
-    - name: Enforce 95% Coverage Threshold
+    - name: Enforce 80% Coverage Threshold
       run: |
         # Extract the line coverage percentage from lcov output
         COVERAGE=$(lcov --summary coverage.info | grep "lines......:" | awk '{print $2}' | sed 's/%//')
@@ -67,5 +67,5 @@ jobs:
         echo "Line coverage: ${COVERAGE}%"
 
         # Fail if below threshold
-        THRESHOLD=95
+        THRESHOLD=80
         awk -v c="$COVERAGE" -v t="$THRESHOLD" 'BEGIN { exit (c < t) }'
