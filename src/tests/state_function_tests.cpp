@@ -40,10 +40,45 @@
 
 #include <gtest/gtest.h>
 
-#include "particle_filter.hpp"
-#include "helper_functions.hpp"
+#include "state_functions.hpp"
 
-TEST(HelperFunctionTests, dummy_test) 
+TEST(StateFunctionTest, TestGenerateWaypoint) 
 {
-    EXPECT_TRUE(true);
+    const State waypoint = generateWaypoint();
+    EXPECT_GE(waypoint.x, X_MIN);
+    EXPECT_LE(waypoint.x, X_MAX);
+    EXPECT_GE(waypoint.y, Y_MIN);
+    EXPECT_LE(waypoint.y, Y_MAX);
+}
+
+TEST(StateFunctionTest, TestMoveActualState) 
+{
+    State test_state{
+        .x = 10.0,
+        .y = 15.0
+    };
+    State close_waypoint{
+        .x = 11.0,
+        .y = 15.0
+    };
+    State far_waypoint{
+        .x = 50.0,
+        .y = 15.0
+    };
+
+    moveActualState(test_state, close_waypoint);
+    State expected_close_waypoint{
+        .x = 11.0,
+        .y = 15.0
+    };
+    EXPECT_NEAR(test_state.x, expected_close_waypoint.x, 1e-6);
+    EXPECT_NEAR(test_state.y, expected_close_waypoint.y, 1e-6);
+
+    moveActualState(test_state, far_waypoint);
+    State expected_final_waypoint{
+        .x = 13.0,
+        .y = 15.0
+    };
+    EXPECT_NEAR(test_state.y, expected_final_waypoint.y, 1e-6);
+    EXPECT_NEAR(test_state.y, expected_final_waypoint.y, 1e-6);
 }

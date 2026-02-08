@@ -79,21 +79,3 @@ double calculateError(const State& estimated_state, const State& true_state)
 
     return std::sqrt(error_x * error_x + error_y * error_y );
 }
-
-void ensure_parent_dir_exists(const std::filesystem::path& file_path)
-{
-    std::filesystem::create_directories(file_path.parent_path());
-}
-
-void createDirectoriesIfNotExist()
-{
-    std::vector<std::filesystem::path> directories = {std::filesystem::path("results"),
-                                                      std::filesystem::path("results") / "estimated_results",
-                                                      std::filesystem::path("results") / "true_state_results",
-                                                      std::filesystem::path("results") / "pf_estimates",
-                                                      std::filesystem::path("results") / "sensor_readings"};
-    for (const auto& dir : directories)
-    {
-        std::filesystem::create_directories(dir);
-    }
-}

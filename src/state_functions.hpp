@@ -69,4 +69,4 @@ double likelihoodFunction(const double sensor_observation, const double estimate
 State generateWaypoint();
 
 void moveActualState(State& state, State& waypoint);
-void moveEstimatedState(State& state,const State& waypoint);
+void moveEstimatedState(State& state, const State& waypoint);

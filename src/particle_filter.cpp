@@ -77,9 +77,6 @@ ParticleFilter::ParticleFilter(const PF_Params& pf_params,
     switch(m_pf_params.thread_mode)
     {
         case PF_THREAD_MODE::MULTI_THREADED:
-            m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(num_threads, m_num_particles);
-            break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
             m_pool = std::make_shared<ThreadPool>(num_threads);
             m_mutation_indicies_chunks = m_pool->getSplitWorkIndices(num_threads, m_num_particles);
             break;
@@ -124,9 +121,6 @@ State ParticleFilter::getXHat() const
         case PF_THREAD_MODE::MULTI_THREADED:
             return getXHatMultiThreaded();
             break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
-            return getXHatMultiThreaded();
-            break;
         case PF_THREAD_MODE::SINGLE_THREADED:
             return getXHatSingleThreaded();
             break;
@@ -139,8 +133,6 @@ void ParticleFilter::mutateParticles(const std::vector<double>& std_dev)
     switch(m_pf_params.thread_mode)
     {
         case PF_THREAD_MODE::MULTI_THREADED:
-            break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
             mutateParticlesMultiThreaded(std_dev);
             break;
         case PF_THREAD_MODE::SINGLE_THREADED:
@@ -155,8 +147,6 @@ void ParticleFilter::propogateState(const State& waypoint)
     switch(m_pf_params.thread_mode)
     {
         case PF_THREAD_MODE::MULTI_THREADED:
-            break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
             propogateStateMultiThreaded(waypoint);
             break;
         case PF_THREAD_MODE::SINGLE_THREADED:
@@ -171,8 +161,6 @@ void ParticleFilter::updateWeights(const double observation, const double sensor
     switch(m_pf_params.thread_mode)
     {
         case PF_THREAD_MODE::MULTI_THREADED:
-            break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
             updateWeightsMultiThreaded(observation, sensor_std);
             break;
         case PF_THREAD_MODE::SINGLE_THREADED:
@@ -187,8 +175,6 @@ void ParticleFilter::resample()
     switch(m_pf_params.thread_mode)
     {
         case PF_THREAD_MODE::MULTI_THREADED:
-            break;
-        case PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL:
              resampleMultiThreaded();
             break;
         case PF_THREAD_MODE::SINGLE_THREADED:
@@ -200,6 +186,8 @@ void ParticleFilter::resample()
 
 void ParticleFilter::saveParticleStatesToFile(const std::filesystem::path& filepath) const
 {
+    std::filesystem::create_directories(filepath.parent_path());
+
     std::ofstream file(filepath);
     if (!file.is_open())
     {

@@ -39,6 +39,7 @@
 // SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <fstream>
 
 #include "particle_filter.hpp"
 #include "helper_functions.hpp"
@@ -75,6 +76,70 @@ TEST_F(ParticleFilterTests, TestConstructionAndInitalization)
 {
     bool run_pf_in_parallel = true;
     ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
+}
+
+TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile)
+{
+    bool run_pf_in_parallel = true;
+
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
+
+    std::filesystem::path filepath =
+        std::filesystem::path("results") / "test_particles.csv";
+
+    // Act
+    test_pf.saveParticleStatesToFile(filepath);
+
+    // Assert: file exists
+    ASSERT_TRUE(std::filesystem::exists(filepath));
+
+    // Open file
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    // --- Validate header ---
+    std::string header;
+    std::getline(file, header);
+    EXPECT_EQ(header, "i,x,y,w");
+
+    // --- Validate particle rows ---
+    std::string line;
+    int row_count = 0;
+
+    double idx_block = 100;
+    while (std::getline(file, line))
+    {
+        ++row_count;
+
+        std::stringstream ss(line);
+        std::string token;
+
+        // CSV format: i,x,y,w
+        std::getline(ss, token, ',');  // index
+        int idx = std::stoi(token);
+        std::getline(ss, token, ',');  // x
+        double x = std::stod(token);
+        std::getline(ss, token, ',');  // y
+        double y = std::stod(token);
+        std::getline(ss, token, ',');  // w
+        double w = std::stod(token);
+
+        // Bounds checks
+        EXPECT_GE(x, X_MIN);
+        EXPECT_LE(x, X_MAX);
+        EXPECT_GE(y, Y_MIN);
+        EXPECT_LE(y, Y_MAX);
+        EXPECT_GE(w, 0.0);
+        EXPECT_LE(w, 1.0);
+
+        // Index check
+        EXPECT_EQ(idx/idx_block, row_count - 1);
+    }
+    
+    file.close();
+
+    // Cleanup
+    std::filesystem::remove(filepath);
 }
 
 TEST_P(ParticleFilterParamsTests, TestGetXHat)
@@ -148,4 +213,4 @@ TEST_P(ParticleFilterParamsTests, TestFullParticleFilterLoop)
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL,PF_THREAD_MODE::SINGLE_THREADED));
+INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(PF_THREAD_MODE::MULTI_THREADED,PF_THREAD_MODE::SINGLE_THREADED));

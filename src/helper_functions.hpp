@@ -49,7 +49,3 @@ void saveStateToCSV(const State& state, const std::filesystem::path& filepath);
 void saveSensorReadingToCSV(double reading, const std::filesystem::path& filepath);
 
 double calculateError(const State& estimated_state, const State& true_state);
-
-void ensure_parent_dir_exists(const std::filesystem::path& file_path);
-
-void createDirectoriesIfNotExist();

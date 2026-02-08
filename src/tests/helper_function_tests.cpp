@@ -39,11 +39,40 @@
 // SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <fstream>
 
-#include "particle_filter.hpp"
 #include "helper_functions.hpp"
 
-TEST(HelperFunctionTests, dummy_test) 
+TEST(HelperFunctionTests, TestSaveStateToCSV)
 {
-    EXPECT_TRUE(true);
+    // Arrange
+    State test_state{
+        .x = 10.0,
+        .y = 15.0
+    };
+
+    std::filesystem::path filepath = std::filesystem::path("results") / "test_state.csv";
+
+    // Act
+    saveStateToCSV(test_state, filepath);
+
+    // Assert: file exists
+    ASSERT_TRUE(std::filesystem::exists(filepath));
+
+    // Read file back
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+    EXPECT_EQ(header, "i,x,y");
+
+    std::string data;
+    std::getline(file, data);
+    EXPECT_EQ(data, "0,10,15");
+
+    file.close();
+
+    // Cleanup
+    std::filesystem::remove(filepath);
 }

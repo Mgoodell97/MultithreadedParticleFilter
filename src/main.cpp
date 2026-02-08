@@ -53,10 +53,6 @@
 int main() 
 {
     bool save_results = true;
-    if (save_results)
-    {
-        createDirectoriesIfNotExist();
-    }
 
     #ifdef TRACY_ENABLE
         std::cout << "Waiting 2s to load tracy." << std::endl;

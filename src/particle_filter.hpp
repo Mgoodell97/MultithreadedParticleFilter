@@ -49,7 +49,6 @@
 enum PF_THREAD_MODE
 {
     MULTI_THREADED,
-    MULTI_THREADED_WITH_THREAD_POOL,
     SINGLE_THREADED
 };
 
@@ -59,7 +58,7 @@ struct PF_Params
     std::vector<double> starting_state_lower_bound{X_MIN,Y_MIN};
     std::vector<double> starting_state_upper_bound{X_MAX,Y_MAX};
     std::vector<double> particle_propogation_std{5,5};
-    PF_THREAD_MODE thread_mode{PF_THREAD_MODE::MULTI_THREADED_WITH_THREAD_POOL};
+    PF_THREAD_MODE thread_mode{PF_THREAD_MODE::MULTI_THREADED};
 };
 
 class ParticleFilter 
