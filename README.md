@@ -103,7 +103,12 @@ cmake --build build
 
 ### Build with coverage
 ```bash
-cmake -B build -DCOVERAGE=ON
+cmake -B build \
+    -DCMAKE_C_COMPILER=gcc-14 \
+    -DCMAKE_CXX_COMPILER=g++-14 \
+    -DSANITIZE=OFF \
+    -DTRACY_ENABLE=OFF \
+    -DCOVERAGE=ON
 cmake --build build
 ```
 
@@ -125,8 +130,25 @@ Coverage requires that you built with -DCOVERAGE=ON.
 ```bash
 ./build/tests
 lcov --capture --directory build --output-file coverage.info
-lcov   --gcov-tool gcov-14   --capture   --directory build   --output-file coverage.info   --ignore-errors mismatch   --ignore-errors negative   --rc geninfo_unexecuted_blocks=1
-lcov   --remove coverage.info   "/usr/*"   "*/googletest/*"   "*/gtest/*"   "*/CMakeFiles/*"   --output-file coverage.info
+
+lcov \
+    --gcov-tool gcov-14 \
+    --capture \
+    --directory build \
+    --output-file coverage.info \
+    --ignore-errors mismatch \
+    --ignore-errors negative \
+    --ignore-errors unused \
+    --rc geninfo_unexecuted_blocks=1
+
+lcov \
+    --remove coverage.info \
+    "/usr/*" \
+    "*/googletest/*" \
+    "*/CMakeFiles/*" \
+    --ignore-errors unused \
+    --output-file coverage.info
+
 genhtml coverage.info --output-directory coverage_html
 ```
 

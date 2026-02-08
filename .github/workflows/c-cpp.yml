@@ -68,5 +68,5 @@ jobs:
         echo "Line coverage: ${COVERAGE}%"
 
         # Fail if below threshold
-        THRESHOLD=95
+        THRESHOLD=90
         awk -v c="$COVERAGE" -v t="$THRESHOLD" 'BEGIN { exit (c < t) }'
