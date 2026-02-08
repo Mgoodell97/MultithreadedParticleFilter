@@ -7,3 +7,4 @@ main
 build/*
 results/*
 coverage_html/*
+coverage.info
