@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y clang cmake ninja-build gcovr
+        sudo apt install -y clang cmake ninja-build lcov
 
     - name: Configure CMake (with coverage)
       run: |
@@ -35,13 +35,36 @@ jobs:
     - name: Run Tests
       run: ./build/tests
 
-    - name: Generate Coverage + Enforce 95% minimum
+    - name: Generate lcov report
       run: |
-        gcovr \
-          --root . \
-          --filter src \
-          --exclude '.*tests.*' \
-          --exclude '.*third_party.*' \
-          --xml coverage.xml \
-          --html-details coverage.html \
-          --fail-under-line 95
+        # Capture raw coverage
+        lcov --capture --directory build --output-file coverage.info
+
+        # Remove unwanted files
+        lcov \
+          --remove coverage.info \
+          "/usr/*" \
+          "*/googletest/*" \
+          "*/gtest/*" \
+          "*/CMakeFiles/*" \
+          --output-file coverage.info
+
+    - name: Enforce 95% minimum coverage
+      run: |
+        # Extract the line coverage percentage from lcov output
+        COVERAGE=$(lcov --summary coverage.info | grep "lines......:" | awk '{print $2}' | sed 's/%//')
+
+        echo "Line coverage: $COVERAGE%"
+
+        # Fail if below threshold
+        THRESHOLD=95
+        if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+          echo "Coverage ($COVERAGE%) is below required threshold ($THRESHOLD%)"
+          exit 1
+        fi
+
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: coverage.info
