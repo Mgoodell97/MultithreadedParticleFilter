@@ -54,6 +54,7 @@ jobs:
           "/usr/*" \
           "*/googletest/*" \
           "*/CMakeFiles/*" \
+          --ignore-errors unused \
           --output-file coverage.info
 
         # Generate HTML report
