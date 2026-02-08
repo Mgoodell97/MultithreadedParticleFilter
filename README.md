@@ -34,20 +34,10 @@ The main steps of a particle filter regardless of the number of threads is:
 
 ![Results](particle_filter_animation.gif)
 
-# Building and running
-
-Below are concise, copy-pasteable commands for common build+run scenarios. The Makefile can be used on both Windows (MinGW) and Linux. 
-
-Common variables:
-- CXX: compiler (default g++)
-- tracy=1: enable Tracy profiler support 
-- sanitize=1: enable ThreadSanitizer (clang only)
-
+# New commands
 // install mingw
 https://www.mingw-w64.org/downloads/#mingw-w64-builds
 pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
-
-pip install gcovr
 
 // submodules
 git submodule update --init --recursive
@@ -55,6 +45,10 @@ git submodule update --init --recursive
 // Windows add this to your system env PATH
 C:\msys64\mingw64\bin
 
+cmake -B build  -DCOVERAGE=ON
+cmake --build build
+lcov   --gcov-tool gcov-14   --capture   --directory build   --output-file coverage.info   --ignore-errors mismatch   --ignore-errors negative   --rc geninfo_unexecuted_blocks=1
+genhtml coverage.info --output-directory coverage_html
 // Windows
 cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
 cmake -B build -G "MinGW Makefiles"
@@ -69,6 +63,14 @@ cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DSANITIZE=ON -DTRACY_ENABLE=ON
 cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DCOVERAGE=ON
 cmake --build build
 
+# Building and running
+
+Below are concise, copy-pasteable commands for common build+run scenarios. The Makefile can be used on both Windows (MinGW) and Linux. 
+
+Common variables:
+- CXX: compiler (default g++)
+- tracy=1: enable Tracy profiler support 
+- sanitize=1: enable ThreadSanitizer (clang only)
 
 ### 1.1 Build using the Makefile (default g++)
 Windows (MinGW):
