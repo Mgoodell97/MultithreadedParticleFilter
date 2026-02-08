@@ -52,7 +52,11 @@
 
 int main() 
 {
-    std::cout << std::setprecision(17);
+    bool save_results = true;
+    if (save_results)
+    {
+        createDirectoriesIfNotExist();
+    }
 
     #ifdef TRACY_ENABLE
         std::cout << "Waiting 2s to load tracy." << std::endl;
@@ -72,18 +76,24 @@ int main()
     double sensor_std_dev = 2.5;
     std::normal_distribution<double> sensor_noise_distribution(0, sensor_std_dev);
 
+    std::cout << std::setprecision(17);
+
     // For visualizations
     State estimated_state = pf.getXHat();
-    saveStateToCSV(estimated_state, "results\\estimated_results\\estimated_state_0.csv");
-    saveStateToCSV(robot_state, "results\\true_state_results\\true_state_0.csv");
-    pf.saveParticleStatesToFile("results\\pf_estimates\\pf_estimates_0.csv");
-
+    if (save_results)
+    {
+        saveStateToCSV(estimated_state, (std::filesystem::path("results") / "estimated_results" / ("estimated_state_0.csv")).string());
+        saveStateToCSV(estimated_state, (std::filesystem::path("results") / "true_state_results" / ("true_state_0.csv")).string());
+        pf.saveParticleStatesToFile((std::filesystem::path("results") / "pf_estimates" / ("pf_estimates_0.csv")).string());
+    }
     double autual_reading = sensorFunction(robot_state); 
     double noisy_reading = autual_reading + sensor_noise_distribution(rng_generator);
 
-    saveSensorReadingToCSV(autual_reading, "results\\sensor_readings\\actual_sensor_reading_0.csv");
-    saveSensorReadingToCSV(noisy_reading, "results\\sensor_readings\\noisy_sensor_reading_0.csv");
-
+    if (save_results)
+    {
+        saveSensorReadingToCSV(autual_reading, (std::filesystem::path("results") / "sensor_readings" / ("actual_sensor_reading_0.csv")).string());
+        saveSensorReadingToCSV(noisy_reading, (std::filesystem::path("results") / "sensor_readings" / ("noisy_sensor_reading_0.csv")).string());
+    }
     // Running the PF!
     for (int64_t i = 1; i < resamples; ++i)
     {
@@ -94,12 +104,11 @@ int main()
         autual_reading = sensorFunction(robot_state); 
         noisy_reading = autual_reading + sensor_noise_distribution(rng_generator);
 
-        saveSensorReadingToCSV(autual_reading, "results\\sensor_readings\\actual_sensor_reading_" +  std::to_string(i) + ".csv");
-        saveSensorReadingToCSV(noisy_reading, "results\\sensor_readings\\noisy_sensor_reading_" +  std::to_string(i) + ".csv");
+        saveSensorReadingToCSV(autual_reading, (std::filesystem::path("results") / "sensor_readings" / ("actual_sensor_reading_" +  std::to_string(i) + ".csv")).string());
+        saveSensorReadingToCSV(noisy_reading, (std::filesystem::path("results") / "sensor_readings" / ("noisy_sensor_reading_" +  std::to_string(i) + ".csv")).string());
 
         std::cout << i << "---------------------------\n";
-        saveStateToCSV(robot_state, "results\\true_state_results\\true_state_" + std::to_string(i) + ".csv");
-
+        saveStateToCSV(robot_state, (std::filesystem::path("results") / "true_state_results" / ("true_state_" + std::to_string(i) + ".csv")).string());
         {
             #ifdef TRACY_ENABLE
                 ZoneScopedN("Whole PF loop");
@@ -109,8 +118,8 @@ int main()
             pf.updateWeights(noisy_reading, sensor_std_dev);
 
             State estimated_state = pf.getXHat();
-            saveStateToCSV(estimated_state, "results\\estimated_results\\estimated_state_" + std::to_string(i) + ".csv");
-            pf.saveParticleStatesToFile("results\\pf_estimates\\pf_estimates_" + std::to_string(i) + ".csv");
+            saveStateToCSV(estimated_state, (std::filesystem::path("results") / "estimated_results" / ("estimated_state_" + std::to_string(i) + ".csv")).string());
+            pf.saveParticleStatesToFile((std::filesystem::path("results") / "pf_estimates" / ("pf_estimates_" + std::to_string(i) + ".csv")).string());
 
             double l2_error = calculateError(estimated_state, robot_state);
             std::cout << "    Error: " << l2_error << "\n";

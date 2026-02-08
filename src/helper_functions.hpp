@@ -40,6 +40,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include "state_functions.hpp"
 
 void saveStateToCSV(const State& state, const std::string& filename);
@@ -47,3 +49,7 @@ void saveStateToCSV(const State& state, const std::string& filename);
 void saveSensorReadingToCSV(const double readings, const std::string& filename);
 
 double calculateError(const State& estimated_state, const State& true_state);
+
+void ensure_parent_dir_exists(const std::filesystem::path& file_path);
+
+void createDirectoriesIfNotExist();
