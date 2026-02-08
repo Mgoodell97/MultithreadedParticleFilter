@@ -45,21 +45,16 @@
 
 TEST(HelperFunctionTests, TestSaveStateToCSV)
 {
-    // Arrange
     State test_state{
         .x = 10.0,
         .y = 15.0
     };
-
     std::filesystem::path filepath = std::filesystem::path("results") / "test_state.csv";
 
-    // Act
     saveStateToCSV(test_state, filepath);
 
-    // Assert: file exists
     ASSERT_TRUE(std::filesystem::exists(filepath));
 
-    // Read file back
     std::ifstream file(filepath);
     ASSERT_TRUE(file.is_open());
 
@@ -72,7 +67,111 @@ TEST(HelperFunctionTests, TestSaveStateToCSV)
     EXPECT_EQ(data, "0,10,15");
 
     file.close();
+    std::filesystem::remove(filepath);
+}
+
+TEST(HelperFunctionTests, TestSaveSensorReadingToCSV)
+{
+    double test_reading = 17.3;
+    std::filesystem::path filepath = std::filesystem::path("results") / "test_reading.csv";
+
+    saveSensorReadingToCSV(test_reading, filepath);
+
+    ASSERT_TRUE(std::filesystem::exists(filepath));
+
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+    EXPECT_EQ(header, "reading");
+
+    std::string data;
+    std::getline(file, data);
+    EXPECT_EQ(data, "17.3");
+
+    file.close();
 
     // Cleanup
     std::filesystem::remove(filepath);
+}
+
+TEST(HelperFunctionTests, TestSaveStateToCSV_FailsToOpen)
+{
+    std::filesystem::path dir = std::filesystem::path("results") / "results_state_fail";
+    std::filesystem::create_directories(dir);
+
+    std::filesystem::path filepath = dir / "test_state_fail.csv";
+
+    {
+        std::ofstream f(filepath);
+        ASSERT_TRUE(f.is_open());
+    }
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_read,
+        std::filesystem::perm_options::replace
+    );
+
+    State test_state{ .x = 1.0, .y = 2.0 };
+
+    saveStateToCSV(test_state, filepath);
+
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+
+    EXPECT_NE(header, "i,x,y");
+
+    file.close();
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_all,
+        std::filesystem::perm_options::replace
+    );
+    std::filesystem::remove_all(dir);
+}
+
+TEST(HelperFunctionTests, TestSaveSensorReadingToCSV_FailsToOpen)
+{
+    std::filesystem::path dir = std::filesystem::path("results") / "results_reading_fail";
+    std::filesystem::create_directories(dir);
+
+    std::filesystem::path filepath = dir / "test_reading_fail.csv";
+
+    {
+        std::ofstream f(filepath);
+        ASSERT_TRUE(f.is_open());
+    }
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_read,
+        std::filesystem::perm_options::replace
+    );
+
+    double test_reading = 17.3;
+
+    saveSensorReadingToCSV(test_reading, filepath);
+
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+
+    EXPECT_NE(header, "reading");
+
+    file.close();
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_all,
+        std::filesystem::perm_options::replace
+    );
+    std::filesystem::remove_all(dir);
 }

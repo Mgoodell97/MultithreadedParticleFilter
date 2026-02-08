@@ -81,7 +81,6 @@ TEST_F(ParticleFilterTests, TestConstructionAndInitalization)
 TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile)
 {
     bool run_pf_in_parallel = true;
-
     ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
 
     std::filesystem::path filepath =
@@ -141,6 +140,48 @@ TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile)
     // Cleanup
     std::filesystem::remove(filepath);
 }
+
+TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile_FailsToOpen)
+{
+    bool run_pf_in_parallel = true;
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
+
+    std::filesystem::path dir = std::filesystem::path("results") / "results_particles_fail";
+    std::filesystem::create_directories(dir);
+
+    std::filesystem::path filepath = dir / "results_particles_fail.csv";
+
+    {
+        std::ofstream f(filepath);
+        ASSERT_TRUE(f.is_open());
+    }
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_read,
+        std::filesystem::perm_options::replace
+    );
+
+    test_pf.saveParticleStatesToFile(filepath);
+
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+
+    EXPECT_NE(header, "i,x,y,w");
+
+    file.close();
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_all,
+        std::filesystem::perm_options::replace
+    );
+    std::filesystem::remove_all(dir);
+}
+
 
 TEST_P(ParticleFilterParamsTests, TestGetXHat)
 {
