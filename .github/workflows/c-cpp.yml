@@ -35,19 +35,26 @@ jobs:
     - name: Run Tests
       run: ./build/tests
 
-    - name: Generate lcov report
-      run: |
-        # Capture raw coverage
-        lcov --capture --directory build --output-file coverage.info
+  - name: Generate lcov report
+    run: |
+      # Capture coverage
+      lcov \
+        --capture \
+        --directory build \
+        --output-file coverage.info \
+        --exclude '*/googletest/*' \
+        --exclude '*/gtest/*' \
+        --exclude '/usr/*' \
+        --exclude '*/CMakeFiles/*'
 
-        # Remove unwanted files
-        lcov \
-          --remove coverage.info \
-          "/usr/*" \
-          "*/googletest/*" \
-          "*/gtest/*" \
-          "*/CMakeFiles/*" \
-          --output-file coverage.info
+      # Optional cleanup pass
+      lcov \
+        --remove coverage.info \
+        "/usr/*" \
+        "*/googletest/*" \
+        "*/gtest/*" \
+        "*/CMakeFiles/*" \
+        --output-file coverage.info
 
     - name: Enforce 95% minimum coverage
       run: |
