@@ -8,6 +8,11 @@ option(TRACY_ENABLE "Enable Tracy profiler" OFF)
 option(SANITIZE "Enable ThreadSanitizer (clang only)" OFF)
 
 # ============================
+#  Coverage option
+# ============================
+option(COVERAGE "Enable coverage reporting" OFF)
+
+# ============================
 #  Compiler settings
 # ============================
 set(CMAKE_CXX_STANDARD 23)
@@ -42,6 +47,19 @@ if(SANITIZE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "ThreadSanitizer enabled")
     add_compile_options(-fsanitize=thread)
     add_link_options(-fsanitize=thread)
+endif()
+
+# ============================
+#  Coverage option
+# ============================
+if(COVERAGE)
+    if(MINGW)
+        message(STATUS "Coverage only available on Linux/macOS (MinGW detected)")
+    else()
+        message(STATUS "Coverage enabled (Linux/macOS)")
+        add_compile_options(--coverage -O0 -g -fprofile-update=atomic)
+        add_link_options(--coverage)
+    endif()
 endif()
 
 # ============================

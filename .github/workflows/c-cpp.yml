@@ -18,18 +18,55 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y clang cmake ninja-build
+        sudo apt install -y clang cmake ninja-build lcov
 
-    - name: Configure CMake
+    - name: Configure CMake (with coverage)
       run: |
         cmake -B build \
-          -G Ninja \
-          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_C_COMPILER=gcc-14 \
+          -DCMAKE_CXX_COMPILER=g++-14 \
           -DSANITIZE=OFF \
-          -DTRACY_ENABLE=OFF
+          -DTRACY_ENABLE=OFF \
+          -DCOVERAGE=ON
 
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build build
 
     - name: Run Tests
       run: ./build/tests
+
+    - name: Generate Coverage (lcov)
+      run: |
+        # Capture coverage using ONLY gcov-14
+        lcov \
+          --gcov-tool gcov-14 \
+          --capture \
+          --directory build \
+          --output-file coverage.info \
+          --ignore-errors mismatch \
+          --ignore-errors negative \
+          --ignore-errors unused \
+          --rc geninfo_unexecuted_blocks=1
+
+        # Remove unwanted files
+        lcov \
+          --remove coverage.info \
+          "/usr/*" \
+          "*/googletest/*" \
+          "*/CMakeFiles/*" \
+          --ignore-errors unused \
+          --output-file coverage.info
+
+        # Generate HTML report
+        genhtml coverage.info --output-directory coverage_html
+
+    - name: Enforce Coverage Threshold
+      run: |
+        # Extract the line coverage percentage from lcov output
+        COVERAGE=$(lcov --summary coverage.info | grep "lines......:" | awk '{print $2}' | sed 's/%//')
+
+        echo "Line coverage: ${COVERAGE}%"
+
+        # Fail if below threshold
+        THRESHOLD=90
+        awk -v c="$COVERAGE" -v t="$THRESHOLD" 'BEGIN { exit (c < t) }'

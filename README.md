@@ -27,103 +27,151 @@ The "robot" in this example follows a simple but dynamic routine:
 The main steps of a particle filter regardless of the number of threads is:
 
 1. Update weights based on sensor reading
-1. Move particles based on control input
     1. Get particle filter estimate $\hat{x}$.
+1. Move particles based on control input
 1. Resample particles based on weights
 1. Mutate the particles for new exploration
 
 ![Results](particle_filter_animation.gif)
 
-# Building and running
+# Installation and running this code
 
-Below are concise, copy-pasteable commands for common build+run scenarios. The Makefile can be used on both Windows (MinGW) and Linux. 
+## 1.1 Windows (MinGW)
+Install MinGW toolchain
+You need a GCC compiler and Make backend compatible with CMake.
 
-Common variables:
-- CXX: compiler (default g++)
-- tracy=1: enable Tracy profiler support 
-- sanitize=1: enable ThreadSanitizer (clang only)
+You can download mingw directly here: https://www.mingw-w64.org/downloads/#mingw-w64-builds
+Once it's installed run the following command in the mingw terminal to install the nessary packages:
+```bash
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
+```
 
-// Windows
-cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
+#### Add MinGW to PATH
+This ensures gcc, g++, and mingw32-make are available globally:
+```bash
+C:\msys64\mingw64\bin
+```
+
+#### Initialize submodules
+Install the optinal submodules for profiling and testing:
+```bash
+git submodule update --init --recursive
+```
+
+## Basic Windows build (no Tracy)
+This configures CMake to use the MinGW generator and builds the project:
+```bash
 cmake -B build -G "MinGW Makefiles"
 cmake --build build
-
-clean
-rm -r -force build
-
-// Linux
-cmake -B build -DCMAKE_CXX_COMPILER=clang++ -DSANITIZE=ON -DTRACY_ENABLE=ON
+```
+### Build with Tracy enabled
+Adds -DTRACY_ENABLE=ON, which enables Tracy instrumentation and compiles the Tracy client:
+```bash
+cmake -B build -G "MinGW Makefiles" -DTRACY_ENABLE=ON
 cmake --build build
-
-
-### 1.1 Build using the Makefile (default g++)
-Windows (MinGW):
-```
-mingw32-make
-```
-Linux:
-```
-make
 ```
 
-### 1.2 Build with Tracy enabled
-Windows (MinGW):
-```
-mingw32-make tracy=1
-```
-Linux:
-```
-make tracy=1
+## 1.2 Linux
+On Linux you can enable Tracy, ThreadSanitizer, or unit test coverage.
+
+## Basic Linux build
+This is the standard no options linux build:
+```bash
+cmake -B build
+cmake --build build
 ```
 
-### 1.3 Build with clang++
-Basic (no Tracy):
-```
-make CXX=clang++
-```
-With Tracy:
-```
-make CXX=clang++ tracy=1
-```
-With ThreadSanitizer (clang only):
-```
-make CXX=clang++ sanitize=1
-```
-With both sanitize and Tracy:
-```
-make CXX=clang++ sanitize=1 tracy=1
+### Build with Tracy enabled
+Adds -DTRACY_ENABLE=ON, which enables Tracy instrumentation and compiles the Tracy client:
+```bash
+cmake -B build -DTRACY_ENABLE=ON
+cmake --build build
 ```
 
-### 1.4 Direct g++ / clang++ commands (no Makefile)
-MinGW g++ (no Tracy):
-```
-g++ main.cpp -o main.exe -lpthread -std=c++23
-```
-MinGW g++ with Tracy:
-```
-g++ main.cpp tracy/public/TracyClient.cpp -Itracy/public -std=c++23 -DTRACY_ENABLE -g -o main.exe -lws2_32 -ldbghelp -lpthread
-```
-clang++ (Linux) with ThreadSanitizer:
-```
-clang++ -fsanitize=thread -std=c++23 main.cpp -o main -lpthread
-```
-clang++ with Tracy and sanitizer:
-```
-clang++ -fsanitize=thread -g -std=c++23 main.cpp tracy/public/TracyClient.cpp -Itracy/public -DTRACY_ENABLE -o main -lpthread
+### Build with ThreadSanitizer
+Enables -fsanitize=thread and debug info:
+```bash
+cmake -B build -DSANITIZE=ON
+cmake --build build
 ```
 
-### 2. Run the program
-Windows:
-```
-main.exe
-```
-
-Linux / macOS:
-```
-./main.exe
+### Build with Tracy + ThreadSanitizer
+```bash
+cmake -B build -DSANITIZE=ON -DTRACY_ENABLE=ON
+cmake --build build
 ```
 
-### Notes
-- ThreadSanitizer is supported only with clang on Linux.
-- Tracy requires running the Tracy profiler UI (Tracy) to capture profiles; build with tracy=1 and run the UI before running the program to see timeline events.
-- If running the sanitizer Tracy you will get warnings about the thread safety in Tracy this is not a problem for this code. 
+### Build with coverage
+```bash
+cmake -B build \
+    -DCMAKE_C_COMPILER=gcc-14 \
+    -DCMAKE_CXX_COMPILER=g++-14 \
+    -DSANITIZE=OFF \
+    -DTRACY_ENABLE=OFF \
+    -DCOVERAGE=ON
+cmake --build build
+```
+
+## 2. Running the Program
+### 2.1 Windows
+```bash
+.\build\particle_filter.exe
+```
+
+### 2.2 Linux / macOS
+```bash
+./build/particle_filter
+```
+
+
+## 3. Generating a Coverage Report
+Coverage requires that you built with -DCOVERAGE=ON.
+
+```bash
+./build/tests
+lcov --capture --directory build --output-file coverage.info
+
+lcov \
+    --gcov-tool gcov-14 \
+    --capture \
+    --directory build \
+    --output-file coverage.info \
+    --ignore-errors mismatch \
+    --ignore-errors negative \
+    --ignore-errors unused \
+    --rc geninfo_unexecuted_blocks=1
+
+lcov \
+    --remove coverage.info \
+    "/usr/*" \
+    "*/googletest/*" \
+    "*/CMakeFiles/*" \
+    --ignore-errors unused \
+    --output-file coverage.info
+
+genhtml coverage.info --output-directory coverage_html
+```
+
+What this does:
+- lcov scans the build directory for .gcda and .gcno files
+- Produces a combined coverage.info file
+- genhtml converts that into a browsable HTML report
+
+## 4. Cleaning the Build Directory
+Windows PowerShell
+```bash
+rm -r -force build
+```
+
+Linux/macOS
+```bash
+rm -rf build
+```
+
+## 5. Notes
+- ThreadSanitizer only works on Linux.
+- Tracy requires running the Tracy UI separately to view profiling data.
+- Tracy + TSan will produce warnings inside Tracy itself, these are expected and harmless.
+- Windows supports only Tracy.
+- Tracy will not work within WSL Ubuntu
+- Linux supports Tracy, sanitizer, and coverage.

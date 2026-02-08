@@ -5,3 +5,6 @@ main.exe
 *.mp4
 main
 build/*
+results/*
+coverage_html/*
+coverage.info
