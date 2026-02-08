@@ -40,10 +40,12 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include "state_functions.hpp"
 
-void saveStateToCSV(const State& state, const std::string& filename);
+void saveStateToCSV(const State& state, const std::filesystem::path& filepath);
 
-void saveSensorReadingToCSV(const double readings, const std::string& filename);
+void saveSensorReadingToCSV(double reading, const std::filesystem::path& filepath);
 
 double calculateError(const State& estimated_state, const State& true_state);

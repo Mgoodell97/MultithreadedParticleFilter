@@ -38,35 +38,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <random>
+#include "state_functions.hpp"
 
-constexpr double X_MIN = 0.0;
-constexpr double Y_MIN = 0.0;
-
-constexpr double X_MAX = 100.0;
-constexpr double Y_MAX = 100.0;
-
-constexpr double MAX_STEP_SIZE = 2.0;
-
-extern std::random_device rd;
-extern std::mt19937 rng_generator;
-
-extern std::uniform_real_distribution<double> x_waypoint_dist;
-extern std::uniform_real_distribution<double> y_waypoint_dist;
-
-struct State
+TEST(StateFunctionTest, TestGenerateWaypoint) 
 {
-    double x;
-    double y;
-};
+    const State waypoint = generateWaypoint();
+    EXPECT_GE(waypoint.x, X_MIN);
+    EXPECT_LE(waypoint.x, X_MAX);
+    EXPECT_GE(waypoint.y, Y_MIN);
+    EXPECT_LE(waypoint.y, Y_MAX);
+}
 
-double sensorFunction(const State& state); 
-double likelihoodFunction(const double sensor_observation, const double estimate_observation, const double sensor_std);
+TEST(StateFunctionTest, TestMoveActualState) 
+{
+    State test_state{
+        .x = 10.0,
+        .y = 15.0
+    };
+    State close_waypoint{
+        .x = 11.0,
+        .y = 15.0
+    };
+    State far_waypoint{
+        .x = 50.0,
+        .y = 15.0
+    };
 
-// Generate a new random waypoint
-State generateWaypoint();
+    moveActualState(test_state, close_waypoint);
+    State expected_close_waypoint{
+        .x = 11.0,
+        .y = 15.0
+    };
+    EXPECT_NEAR(test_state.x, expected_close_waypoint.x, 1e-6);
+    EXPECT_NEAR(test_state.y, expected_close_waypoint.y, 1e-6);
 
-void moveActualState(State& state, State& waypoint);
-void moveEstimatedState(State& state, const State& waypoint);
+    moveActualState(test_state, far_waypoint);
+    State expected_final_waypoint{
+        .x = 13.0,
+        .y = 15.0
+    };
+    EXPECT_NEAR(test_state.y, expected_final_waypoint.y, 1e-6);
+    EXPECT_NEAR(test_state.y, expected_final_waypoint.y, 1e-6);
+}

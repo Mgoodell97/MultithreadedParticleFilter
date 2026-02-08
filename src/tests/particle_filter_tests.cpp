@@ -1,4 +1,45 @@
+// Custom Non‑Commercial License
+
+// Copyright (c) 2025 Mgoodell97
+
+// Permission is hereby granted, free of charge, to any individual or
+// non‑commercial entity obtaining a copy of this software and associated
+// documentation files (the "Software"), to use, copy, modify, merge, publish,
+// and distribute the Software for personal, educational, or research purposes,
+// subject to the following conditions:
+
+// 1. Commercial Use:
+//    Any company, corporation, or organization intending to use the Software
+//    must first notify the copyright holder and obtain explicit written
+//    permission. Commercial use without such permission is strictly prohibited.
+
+// 2. Unauthorized Commercial Use:
+//    If a company is found to be using the Software without prior authorization,
+//    the copyright holder is entitled to receive 1% of the company’s gross
+//    profits moving forward, enforceable as a licensing fee.
+
+// 3. Artificial Intelligence / Machine Learning Use:
+//    If the Software is incorporated into machine learning
+//    models, neural networks, generative pre‑trained transformers (GPTs), or similar AI systems,
+//    the company deploying such use is solely responsible for compliance with
+//    this license. Responsibility cannot be shifted to the provider of training
+//    data or third‑party services.
+
+// 4. Attribution:
+//    The above copyright notice and this permission notice shall be included in
+//    all copies or substantial portions of the Software.
+
+// Disclaimer:
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <gtest/gtest.h>
+#include <fstream>
 
 #include "particle_filter.hpp"
 #include "helper_functions.hpp"
@@ -29,19 +70,125 @@ protected:
     State m_gt_robot_state;
 };
 
-class ParticleFilterParamsTests: public ParticleFilterTests, public testing::WithParamInterface<bool> {};
+class ParticleFilterParamsTests: public ParticleFilterTests, public testing::WithParamInterface<PF_THREAD_MODE> {};
 
 TEST_F(ParticleFilterTests, TestConstructionAndInitalization) 
 {
     bool run_pf_in_parallel = true;
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
 }
+
+TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile)
+{
+    bool run_pf_in_parallel = true;
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
+
+    std::filesystem::path filepath =
+        std::filesystem::path("results") / "test_particles.csv";
+
+    // Act
+    test_pf.saveParticleStatesToFile(filepath);
+
+    // Assert: file exists
+    ASSERT_TRUE(std::filesystem::exists(filepath));
+
+    // Open file
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    // --- Validate header ---
+    std::string header;
+    std::getline(file, header);
+    EXPECT_EQ(header, "i,x,y,w");
+
+    // --- Validate particle rows ---
+    std::string line;
+    int row_count = 0;
+
+    double idx_block = 100;
+    while (std::getline(file, line))
+    {
+        ++row_count;
+
+        std::stringstream ss(line);
+        std::string token;
+
+        // CSV format: i,x,y,w
+        std::getline(ss, token, ',');  // index
+        int idx = std::stoi(token);
+        std::getline(ss, token, ',');  // x
+        double x = std::stod(token);
+        std::getline(ss, token, ',');  // y
+        double y = std::stod(token);
+        std::getline(ss, token, ',');  // w
+        double w = std::stod(token);
+
+        // Bounds checks
+        EXPECT_GE(x, X_MIN);
+        EXPECT_LE(x, X_MAX);
+        EXPECT_GE(y, Y_MIN);
+        EXPECT_LE(y, Y_MAX);
+        EXPECT_GE(w, 0.0);
+        EXPECT_LE(w, 1.0);
+
+        // Index check
+        EXPECT_EQ(idx/idx_block, row_count - 1);
+    }
+    
+    file.close();
+
+    // Cleanup
+    std::filesystem::remove(filepath);
+}
+
+TEST_F(ParticleFilterTests, TestSaveParticleStatesToFile_FailsToOpen)
+{
+    bool run_pf_in_parallel = true;
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
+
+    std::filesystem::path dir = std::filesystem::path("results") / "results_particles_fail";
+    std::filesystem::create_directories(dir);
+
+    std::filesystem::path filepath = dir / "results_particles_fail.csv";
+
+    {
+        std::ofstream f(filepath);
+        ASSERT_TRUE(f.is_open());
+    }
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_read,
+        std::filesystem::perm_options::replace
+    );
+
+    test_pf.saveParticleStatesToFile(filepath);
+
+    std::ifstream file(filepath);
+    ASSERT_TRUE(file.is_open());
+
+    std::string header;
+    std::getline(file, header);
+
+    EXPECT_NE(header, "i,x,y,w");
+
+    file.close();
+
+    std::filesystem::permissions(
+        filepath,
+        std::filesystem::perms::owner_all,
+        std::filesystem::perm_options::replace
+    );
+    std::filesystem::remove_all(dir);
+}
+
 
 TEST_P(ParticleFilterParamsTests, TestGetXHat)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
     
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     State estimate = test_pf.getXHat();
 
     State initial_state_estimate = {
@@ -55,9 +202,10 @@ TEST_P(ParticleFilterParamsTests, TestGetXHat)
 
 TEST_P(ParticleFilterParamsTests, TestUpdateWeights)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
     State estimate = test_pf.getXHat();
 
@@ -68,9 +216,10 @@ TEST_P(ParticleFilterParamsTests, TestUpdateWeights)
 
 TEST_P(ParticleFilterParamsTests, TestPropogateState)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
     test_pf.propogateState({m_waypoint}); // Limited by MAX_STEP_SIZE
     State estimate = test_pf.getXHat();
@@ -83,10 +232,11 @@ TEST_P(ParticleFilterParamsTests, TestPropogateState)
 
 TEST_P(ParticleFilterParamsTests, TestFullParticleFilterLoop)
 {
-    bool run_pf_in_parallel = GetParam();
+    PF_THREAD_MODE run_pf_in_parallel = GetParam();
+    m_pf_params.thread_mode = run_pf_in_parallel;
 
     double expected_error = 0.0;
-    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState, run_pf_in_parallel};
+    ParticleFilter test_pf = ParticleFilter{m_pf_params, &likelihoodFunction, &moveEstimatedState};
     for (uint16_t i=0; i<m_resamples;i++)
     {
         test_pf.updateWeights(sensorFunction(m_gt_robot_state), m_sensor_std_dev);
@@ -104,4 +254,4 @@ TEST_P(ParticleFilterParamsTests, TestFullParticleFilterLoop)
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(true,false));
+INSTANTIATE_TEST_SUITE_P(TestMultiAndSingleThreaded, ParticleFilterParamsTests, testing::Values(PF_THREAD_MODE::MULTI_THREADED,PF_THREAD_MODE::SINGLE_THREADED));

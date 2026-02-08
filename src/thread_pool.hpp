@@ -93,7 +93,7 @@ public:
         }
     }
 
-    std::vector<std::vector<int64_t>> getSplitWorkIndices(const int64_t input_size) 
+    static std::vector<std::vector<int64_t>> getSplitWorkIndices(const int64_t m_number_of_threads, const int64_t input_size) 
     {
         const int64_t p = std::min(m_number_of_threads, input_size);
         std::vector<std::vector<int64_t>> result;

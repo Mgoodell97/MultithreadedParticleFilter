@@ -43,30 +43,33 @@
 
 #include "helper_functions.hpp"
 
-void saveStateToCSV(const State& state, const std::string& filename) 
+void saveStateToCSV(const State& state, const std::filesystem::path& filepath)
 {
-    std::ofstream file(filename);
+    // Ensure parent directory exists
+    std::filesystem::create_directories(filepath.parent_path());
+
+    std::ofstream file(filepath);
     if (!file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        std::cerr << "Error opening file: " << filepath << std::endl;
         return;
     }
 
-    file << "i,x,y" << "\n";
+    file << "i,x,y\n";
     file << 0 << "," << state.x << "," << state.y << "\n";
-    file.close();
 }
 
-void saveSensorReadingToCSV(const double readings, const std::string& filename) 
+void saveSensorReadingToCSV(double reading, const std::filesystem::path& filepath)
 {
-    std::ofstream file(filename);
+    std::filesystem::create_directories(filepath.parent_path());
+
+    std::ofstream file(filepath);
     if (!file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        std::cerr << "Error opening file: " << filepath << std::endl;
         return;
     }
 
-    file << "reading" << "\n";
-    file << readings << "\n";
-    file.close();
+    file << "reading\n";
+    file << reading << "\n";
 }
 
 double calculateError(const State& estimated_state, const State& true_state)
