@@ -40,6 +40,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 // Internal includes
 #include "thread_pool.hpp"
 #include "state_functions.hpp"
@@ -84,7 +86,7 @@ public:
     void mutateParticles(const std::vector<double>& std_dev);
 
     // For visualizations
-    void saveParticleStatesToFile(const std::string& filename) const;
+    void saveParticleStatesToFile(const std::filesystem::path& filepath) const;
 
 private:
     State getXHatSingleThreaded() const;

@@ -38,18 +38,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <filesystem>
+#include "particle_filter.hpp"
+#include "helper_functions.hpp"
 
-#include "state_functions.hpp"
-
-void saveStateToCSV(const State& state, const std::filesystem::path& filepath);
-
-void saveSensorReadingToCSV(double reading, const std::filesystem::path& filepath);
-
-double calculateError(const State& estimated_state, const State& true_state);
-
-void ensure_parent_dir_exists(const std::filesystem::path& file_path);
-
-void createDirectoriesIfNotExist();
+TEST(HelperFunctionTests, dummy_test) 
+{
+    EXPECT_TRUE(true);
+}

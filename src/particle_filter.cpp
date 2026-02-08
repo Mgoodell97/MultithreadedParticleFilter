@@ -198,12 +198,12 @@ void ParticleFilter::resample()
     return;
 }
 
-void ParticleFilter::saveParticleStatesToFile(const std::string& filename) const
+void ParticleFilter::saveParticleStatesToFile(const std::filesystem::path& filepath) const
 {
-    std::ofstream file(filename);
+    std::ofstream file(filepath);
     if (!file.is_open())
     {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        std::cerr << "Error opening file: " << filepath << std::endl;
         return;
     }
 
