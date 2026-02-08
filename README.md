@@ -1,6 +1,6 @@
 # Multi-threaded Particle Filter
 
-This repository provides a hands-on example of a multithreaded particle filter, inspired by the core concepts outlined in [Particle Filters: A Hands-On Tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC7826670/). The implementation is written in modern C++, with the flexibility to toggle multithreading on or off through a simple boolean flag—making it easy to experiment with both single-threaded and parallel execution.
+This repository provides a hands-on example of a multithreaded particle filter, inspired by the core concepts outlined in [Particle Filters: A Hands-On Tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC7826670/). The implementation is written in modern C++, with the flexibility to toggle multithreading on or off through a simple boolean flag, making it easy to experiment with both single-threaded and parallel execution.
 
 On an AMD 9950X (16 cores / 32 threads, boosting to ~5.7 GHz), the benefits are clear. The multithreaded implementation completes a full particle‑filter update cycle in 34.25 ms, whereas the single‑threaded version requires 456.28 ms on average. This represents more than an order‑of‑magnitude speedup, which can aid in lower latencies or a larger search space.
 
