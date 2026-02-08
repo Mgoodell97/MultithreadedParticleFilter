@@ -100,7 +100,7 @@ def update(index):
     ax_main.set_ylim(y_lim)
     ax_main.set_xlabel('x (m)')
     ax_main.set_ylabel('y (m)')
-    ax_main.set_title(f'Particle filter at index {index}')
+    ax_main.set_title(f'Particle filter at time {index}')
 
     ax_main.scatter(estimated_state.x, estimated_state.y, color='blue', zorder=5, label='Estimated state')
     ax_main.scatter(true_state.x, true_state.y, color='green', zorder=3, label='True state')
