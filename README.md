@@ -2,7 +2,7 @@
 
 This repository provides a hands-on example of a multithreaded particle filter, inspired by the core concepts outlined in [Particle Filters: A Hands-On Tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC7826670/). The implementation is written in modern C++, with the flexibility to toggle multithreading on or off through a simple boolean flag, making it easy to experiment with both single-threaded and parallel execution.
 
-On an AMD 9950X (16 cores / 32 threads, boosting to ~5.7 GHz), the benefits are clear. The multithreaded implementation completes a full particle‑filter update cycle in 34.25 ms, whereas the single‑threaded version requires 456.28 ms on average. This represents more than an order‑of‑magnitude speedup, which can aid in lower latencies or a larger search space.
+On an AMD 9950X (16 cores / 32 threads, boosting to ~5.7 GHz), the benefits are clear. The multithreaded implementation completes a full particle‑filter update cycle in 34.25 ms, whereas the single‑threaded version requires 456.28 ms on average. A similar pattern appears on a mobile i9‑13900H (14 cores / 20 threads, boosting up to 5.40 GHz), where the multithreaded version completes in 106 ms compared to 569.43 ms for the single‑threaded run. Across both architectures, the multithreaded design delivers a benifical speedup, enabling lower latencies or a larger search space.
 
 # Robot State & Sensor Model
 In this example, the system estimates a 2D state consisting of xy coordinates. The simulated sensor is modeled as a distance sensor that measures, with its base fixed at the origin. This setup provides a straightforward yet illustrative way to explore how particle filters integrate sensor readings into state estimation.
