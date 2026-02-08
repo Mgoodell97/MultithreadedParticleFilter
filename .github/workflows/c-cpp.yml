@@ -45,6 +45,7 @@ jobs:
           --output-file coverage.info \
           --ignore-errors mismatch \
           --ignore-errors negative \
+          --ignore-errors unused \
           --rc geninfo_unexecuted_blocks=1
 
         # Remove unwanted files
@@ -52,7 +53,6 @@ jobs:
           --remove coverage.info \
           "/usr/*" \
           "*/googletest/*" \
-          "*/gtest/*" \
           "*/CMakeFiles/*" \
           --output-file coverage.info
 
