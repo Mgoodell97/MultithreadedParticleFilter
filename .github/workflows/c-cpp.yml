@@ -35,12 +35,24 @@ jobs:
 
     - name: Generate Coverage (lcov)
       run: |
-        # Capture coverage from the build directory
-        lcov --capture --directory build --output-file coverage.info
+        # Capture coverage using ONLY gcov-14
+        lcov \
+          --gcov-tool gcov-14 \
+          --capture \
+          --directory build \
+          --output-file coverage.info \
+          --ignore-errors mismatch \
+          --ignore-errors negative \
+          --rc geninfo_unexecuted_blocks=1
 
-        # Get coverage data
-        lcov   --gcov-tool gcov-14   --capture   --directory build   --output-file coverage.info   --ignore-errors mismatch   --ignore-errors negative   --rc geninfo_unexecuted_blocks=1
-        lcov   --remove coverage.info   "/usr/*"   "*/googletest/*"   "*/gtest/*"   "*/CMakeFiles/*"   --output-file coverage.info
+        # Remove unwanted files
+        lcov \
+          --remove coverage.info \
+          "/usr/*" \
+          "*/googletest/*" \
+          "*/gtest/*" \
+          "*/CMakeFiles/*" \
+          --output-file coverage.info
 
         # Generate HTML report
         genhtml coverage.info --output-directory coverage_html
