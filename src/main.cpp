@@ -129,9 +129,9 @@ int main()
             double l2_error = calculateError(estimated_state, robot_state);
             std::cout << "    Error: " << l2_error << "\n";
             
-            pf.propogateState(waypoint);                  // 2. Move particles based on control input
-            pf.resample();                                // 3. Resample particles based on weights
-            pf.mutateParticles(particle_propogation_std); // 4. Add some noise to particles
+            pf.resample();                                // 2. Resample particles based on weights
+            pf.mutateParticles(particle_propogation_std); // 3. Add some noise to particles
+            pf.propogateState(waypoint);                  // 4. Move particles based on control input
         }
 
         // PF operations done 
