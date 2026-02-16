@@ -75,14 +75,14 @@ public:
     // 1.5 Best time to get estimate before moving particles
     State getXHat() const;
 
-    // 2. Move particles based on control input
-    void propogateState(const State& waypoint);
-
-    // 3. Resample particles based on weights (keep the best and discard the rest)
+    // 2. Resample particles based on weights (keep the best and discard the rest)
     void resample();
 
-    // 4. Mutate particles to add randomness to duplucates after resampling
+    // 3. Mutate particles to add randomness to duplucates after resampling
     void mutateParticles(const std::vector<double>& std_dev);
+
+    // 4. Move particles based on control input
+    void propogateState(const State& waypoint);
 
     // For visualizations
     void saveParticleStatesToFile(const std::filesystem::path& filepath) const;
